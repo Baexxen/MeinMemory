@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MeinMemory</string>
+    <string name="private_version">7301522aa3cf6cb6ed1bbfbc5c6d5eab08d72a0e</string>
+    <string name="presplash_color">#000000</string>
+    <string name="urlScheme">kivy</string>
+</resources>
