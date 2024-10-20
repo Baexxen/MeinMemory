@@ -65,6 +65,8 @@ def load_settings():
 # Einstellungen zurück auf Standardwerte setzen
 def reset_settings():
     print("Einstellungen werden auf Standardwerte zurückgesetzt.")
+    app = App.get_running_app()
+    settings_file_path = app.get_settings_file_path()
     with open(settings_file_path, "w") as file:
         json.dump(default_settings, file, indent=4)
     return default_settings

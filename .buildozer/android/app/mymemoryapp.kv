@@ -297,11 +297,11 @@
             id: top_label
             text: "Einstellungen"
         Button:
-            text: "Zurück"
+            text: "Bilder wählen"
             background_normal: ""
             background_color: app.light_blue
             on_release:
-                app.root.current = "main_menu"
+                app.root.current = "pics_select"
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
@@ -374,7 +374,173 @@
                 on_release:
                     root.decrease_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
+        Button:
+            text: "Zurück"
+            background_normal: ""
+            background_color: app.light_blue
+            on_release:
+                app.root.current = "main_menu"
 
+# Auswahlbildschirm für Bilder
+<PicsSelectScreen>:
+    akira_label: akira_label
+    akira_box: akira_box
+    cars_label: cars_label
+    cars_box: cars_box
+    bundesliga_label: bundesliga_label
+    bundesliga_box: bundesliga_box
+    own_landscapes_label: own_landscapes_label
+    own_landscapes_box: own_landscapes_box
+    tanks_label: tanks_label
+    tanks_box: tanks_box
+    sexy_label: sexy_label
+    sexy_box: sexy_box
+    universe_label: universe_label
+    universe_box: universe_box
+    random_label: random_label
+    random_box: random_box
+
+    BoxLayout:
+        orientation: "vertical"
+        padding: (5, 5, 5, 5)
+        spacing: 1
+        Label:
+            text: "Auswahl der Bilder"
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: akira_label
+                text: "Akira"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: akira_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: cars_label
+                text: "Autos"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: cars_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: bundesliga_label
+                text: "Bundesliga"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: bundesliga_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: own_landscapes_label
+                text: "Landschaften von mir"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: own_landscapes_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: tanks_label
+                text: "Panzer"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: tanks_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: sexy_label
+                text: "Sexy"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: sexy_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: universe_label
+                text: "Universum"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: universe_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.5, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: random_label
+                text: "Verschiedenes"
+                size_hint: 0.9, 1
+            CheckBox:
+                id: random_box
+                size_hint: 0.1, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked.png"
+                on_release:
+                    root.save_pics_lists()
+        Button:
+            text: "Zurück"
+            background_normal: ""
+            background_color: app.light_blue
+            on_release:
+                app.root.current = "settings"
 # Eigentliches Spiel
 <GameScreen>:
     layout: layout

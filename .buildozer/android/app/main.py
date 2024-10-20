@@ -1,5 +1,7 @@
 import random
 import sys
+from tabnanny import check
+
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition, FadeTransition, SwapTransition, WipeTransition, CardTransition, SlideTransition, ShaderTransition, RiseInTransition, FallOutTransition, TransitionBase
 from kivy.uix.image import Image
@@ -23,6 +25,9 @@ from score_manager import load_best_scores, save_best_scores, update_best_scores
 # Settings
 from settings_manager import save_settings, load_settings, reset_settings
 
+# Bilderlisten
+from pictures_manager import save_pics_lists, load_pics_lists, reset_selected_pics_lists
+
 # Folgende Importe werden nur in der .kv Datei verwendet. Bitte nicht löschen :)
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
@@ -30,6 +35,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
+from kivy.uix.checkbox import CheckBox
 from custom_ui import MyScatter, MyMemoryGrid, LabelBackgroundColor, ButtonBackgroundColor
 
 # Global variables initialization
@@ -87,7 +93,7 @@ class AI(Player):
             self.error_probability = 0
 
     def select_first_card(self):
-        print(f"AI sucht erste Karte")
+        print(f"AI {self.difficulty} sucht erste Karte")
         first_card = None
         self.active_cards = self.game_screen.card_list.copy()
         if self.difficulty == "easy":
@@ -210,10 +216,10 @@ class AI(Player):
     def do_error(self):
         error = randint(1, 100)
         if error > self.error_probability:
-            print(f"AI macht keinen Fehler.")
+            print(f"AI ({self.difficulty}) macht keinen Fehler. ({error}/{self.error_probability})")
             return False
         else:
-            print(f"AI macht Fehler.")
+            print(f"AI ({self.difficulty}) macht Fehler. ({error}/{self.error_probability})")
             return True
 
     def find_wrong_card(self, first_card):
@@ -234,6 +240,14 @@ class AI(Player):
         self.known_cards.clear()
         self.game_screen = self.app.root.get_screen("game")
         self.difficulty = self.game_screen.current_difficulty
+        if self.difficulty == "easy":
+            self.error_probability = 50
+        elif self.difficulty == "medium":
+            self.error_probability = 25
+        elif self.difficulty == "hard":
+            self.error_probability = 5
+        elif self.difficulty == "impossible":
+            self.error_probability = 0
         self.active_cards.clear()
         self.active_cards = self.game_screen.card_list.copy()
 
@@ -329,7 +343,7 @@ class GameScreen(Screen):
         self.current_highscore = 0
         self.current_difficulty = "easy"
         self.scatter.game_screen = self
-        self.game_over = False
+        self.game_over = True
         self.current_game_mode = "standard"
         self.input_enabled = True
         self.cols = 4
@@ -546,7 +560,7 @@ class GameScreen(Screen):
         self.change_top_label_text(f"Aktueller Spieler ist {self.current_player.name}")
 
     def ai_turn(self):
-        first_card = self.ai.select_first_card()  # AI wählt erste, anschließend direkt die zweite Karte aus.
+        first_card = self.ai.select_first_card()
         second_card = None
         if first_card:
             self.flip_card(first_card)
@@ -633,8 +647,18 @@ class MainMenuScreen(Screen):
         self.rect.pos = self.pos
         self.rect.size = self.size
 
-    def update_continue_button(self):
-        self.continue_button.disabled = False
+    def update_continue_button(self, game_over):
+        if game_over:
+            self.continue_button.disabled = True
+        else:
+            self.continue_button.disabled = False
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        app_root = app.root
+        if app_root:
+            game_screen = app_root.get_screen("game")
+            self.update_continue_button(game_screen.game_over)
 
 
 class StandardModeScreen(Screen):
@@ -834,7 +858,7 @@ class SettingsScreen(Screen):
         self.ai_timeout = 1.0
         self.hide_cards_timeout = 0.8
         self.load_settings()
-        self.top_label.redraw(ORANGE, WHITE, True, WHITE, 5)
+        self.top_label.redraw(ORANGE, WHITE, False, WHITE, 5)
         self.touch_delay_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.ai_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.hide_cards_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
@@ -905,6 +929,71 @@ class SettingsScreen(Screen):
             self.hide_cards_timeout = round(self.hide_cards_timeout, 1)
             new_setting = ("hide_cards_timeout", self.hide_cards_timeout)
             save_settings(new_setting)
+
+
+class PicsSelectScreen(Screen):
+    print("PicsSelectScreen")
+    akira_label = ObjectProperty()
+    akira_box = ObjectProperty()
+    cars_label = ObjectProperty()
+    cars_box = ObjectProperty()
+    bundesliga_label = ObjectProperty()
+    bundesliga_box = ObjectProperty()
+    own_landscapes_label = ObjectProperty()
+    own_landscapes_box = ObjectProperty()
+    tanks_label = ObjectProperty()
+    tanks_box = ObjectProperty()
+    sexy_label = ObjectProperty()
+    sexy_box = ObjectProperty()
+    universe_label = ObjectProperty()
+    universe_box = ObjectProperty()
+    random_label = ObjectProperty()
+    random_box = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.akira_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.cars_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.bundesliga_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.own_landscapes_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.tanks_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.sexy_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.universe_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.random_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+
+        with self.canvas.before:
+            Color(rgba=ORANGE)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.bind(pos=self.update_rect, size=self.update_rect)
+
+    def update_rect(self, *args):
+        self.rect.pos = self.pos
+        self.rect.size = self.size
+
+    def save_pics_lists(self):
+        save_pics_lists("akira_images", self.akira_box.state)
+        save_pics_lists("car_images", self.cars_box.state)
+        save_pics_lists("bundesliga_images", self.bundesliga_box.state)
+        save_pics_lists("own_landscape_images", self.own_landscapes_box.state)
+        save_pics_lists("tank_images", self.tanks_box.state)
+        save_pics_lists("sexy_images", self.sexy_box.state)
+        save_pics_lists("universe_images", self.universe_box.state)
+        save_pics_lists("random_images", self.random_box.state)
+
+    def load_checkbox_statuses(self):
+        checkboxes = load_pics_lists()
+        self.akira_box.state = checkboxes["akira_images"]
+        self.cars_box.state = checkboxes["car_images"]
+        self.bundesliga_box.state = checkboxes["bundesliga_images"]
+        self.own_landscapes_box.state = checkboxes["own_landscape_images"]
+        self.tanks_box.state = checkboxes["tank_images"]
+        self.sexy_box.state = checkboxes["sexy_images"]
+        self.universe_box.state = checkboxes["universe_images"]
+        self.random_box.state = checkboxes["random_images"]
+
+    def on_pre_enter(self, *args):
+        self.load_checkbox_statuses()
 # endregion
 
 
@@ -928,9 +1017,7 @@ class MyMemoryApp(App):
         self.akira_images = []
         self.bundesliga_images = []
         self.own_landscape_images = []
-        self.tank_images = []
         self.sexy_images = []
-        self.universe_images = []
         self.random_images = []
 
     def build(self):
@@ -946,6 +1033,7 @@ class MyMemoryApp(App):
         sm.add_widget(DuellModeScreen(name="duell_mode"))
         sm.add_widget(BattleModeScreen(name="battle_mode"))
         sm.add_widget(SettingsScreen(name="settings"))
+        sm.add_widget(PicsSelectScreen(name="pics_select"))
         sm.current = "main_menu"
         sm.transition = SwapTransition()
         return sm
@@ -964,9 +1052,8 @@ class MyMemoryApp(App):
         self.current_difficulty = difficulty
         self.game_screen.current_difficulty = self.current_difficulty
         self.game_screen.cards = cards_count
-        main_menu_screen = self.root.get_screen("main_menu")
-        main_menu_screen.update_continue_button()
         self.load_pictures()
+        self.load_active_pics_lists()
         self.game_screen.restart_game()
         self.root.current = "game"
 
@@ -992,6 +1079,37 @@ class MyMemoryApp(App):
         Window.size = (Window.size[0] + 1, Window.size[1] + 1)
         Window.size = (Window.size[0] - 1, Window.size[1] - 1)
 
+    def load_active_pics_lists(self):
+        lists_selected = 0
+        all_pics_lists = load_pics_lists()
+        if all_pics_lists["akira_images"] == "down":
+            self.pics_list.extend(self.akira_images)
+            lists_selected += 1
+        if all_pics_lists["car_images"] == "down":
+            self.pics_list.extend(self.car_images)
+            lists_selected += 1
+        if all_pics_lists["bundesliga_images"] == "down":
+            self.pics_list.extend(self.bundesliga_images)
+            lists_selected += 1
+        if all_pics_lists["own_landscape_images"] == "down":
+            self.pics_list.extend(self.own_landscape_images)
+            lists_selected += 1
+        if all_pics_lists["sexy_images"] == "down":
+            self.pics_list.extend(self.sexy_images)
+            lists_selected += 1
+        if all_pics_lists["random_images"] == "down":
+            self.pics_list.extend(self.random_images)
+            lists_selected += 1
+
+        if lists_selected == 0:
+            reset_selected_pics_lists()
+            self.pics_list.extend(self.akira_images)
+            self.pics_list.extend(self.car_images)
+            self.pics_list.extend(self.bundesliga_images)
+            self.pics_list.extend(self.own_landscape_images)
+            self.pics_list.extend(self.sexy_images)
+            self.pics_list.extend(self.random_images)
+
     def load_pictures(self):
         print("MyMemoryApp: load_pictures")
         paths = {
@@ -999,9 +1117,7 @@ class MyMemoryApp(App):
             "pics/Autos": self.car_images,
             "pics/Bundesliga": self.bundesliga_images,
             "pics/EigeneLandschaften": self.own_landscape_images,
-            "pics/Panzer": self.tank_images,
             "pics/Sexy": self.sexy_images,
-            "pics/Universum": self.universe_images,
             "pics/Verschiedenes": self.random_images,
         }
 
@@ -1011,23 +1127,14 @@ class MyMemoryApp(App):
                     full_path = os.path.join(path, file_name)
                     image_list.append(full_path)
 
-        # Füge alle Bilder zur Hauptliste hinzu
-        self.pics_list.extend(self.akira_images)
-        self.pics_list.extend(self.car_images)
-        self.pics_list.extend(self.bundesliga_images)
-        self.pics_list.extend(self.own_landscape_images)
-        self.pics_list.extend(self.tank_images)
-        self.pics_list.extend(self.sexy_images)
-        self.pics_list.extend(self.universe_images)
-        self.pics_list.extend(self.random_images)
-
-        print(f"~~~~~~~~~~~~~~~~~~pics_list: {self.pics_list}")
-
     def get_score_file_path(self):
         return os.path.join(self.user_data_dir, "highscores.json")
 
     def get_settings_file_path(self):
         return os.path.join(self.user_data_dir, "settings.json")
+
+    def get_pics_lists_file_path(self):
+        return os.path.join(self.user_data_dir, "pics_lists.json")
 
     def exit_app(self):
         print("Es wird über 'MyMemoryApp' geschlossen.")
