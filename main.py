@@ -77,20 +77,15 @@ class AI(Player):
     def __init__(self, name, difficulty="easy"):
         super().__init__(name)
         self.difficulty = difficulty
+        self.card_grid = []
         self.active_cards = []  # Liste aller Karten
         self.known_cards = {}  # Dict mit Karten, die schon aufgedeckt waren
         self.app = App.get_running_app()
         self.game_screen = None
         self.error_probability = 0
         self.error = False
-        if self.difficulty == "easy":
-            self.error_probability = 50
-        elif self.difficulty == "medium":
-            self.error_probability = 25
-        elif self.difficulty == "hard":
-            self.error_probability = 5
-        elif self.difficulty == "impossible":
-            self.error_probability = 0
+        self.cols = 0
+        self.error_probability = {"easy": 35, "medium": 15, "hard": 5, "impossible": 0}[self.difficulty]
 
     def select_first_card(self):
         print(f"AI {self.difficulty} sucht erste Karte")
@@ -116,7 +111,7 @@ class AI(Player):
                 elif self.difficulty == "hard":
                     shuffle(self.active_cards)
                     for card in self.active_cards:
-                        if card != first_card and not card.disabled:
+                        if not card.disabled:
                             if card.value not in self.known_cards:
                                 first_card = card
                                 break
@@ -137,50 +132,49 @@ class AI(Player):
         self.active_cards = self.game_screen.card_list.copy()
         self.error = self.do_error()
 
-        if self.error:
-            print("AI macht absichtlichen Fehler.")
-            second_card = self.find_wrong_card(first_card)
+        known_pair = self.find_match(first_card)
+        print(f"Es wird nach bekanntem Paar gesucht...")
+        if known_pair:
+            print(f"Bekanntes Paar gefunden ({known_pair})")
+            for card in known_pair:
+                if not card.flipped:
+                    second_card = card
+                    print(f"second_card = {second_card.value}")
         else:
-            print("AI macht nie Fehler.")
-            known_pair = self.find_match(first_card)
-            print(f"Es wird nach bekanntem Paar gesucht...")
-            if known_pair:
-                print(f"Bekanntes Paar gefunden ({known_pair})")
-                for card in known_pair:
-                    if not card.flipped:
+            if self.difficulty == "easy" or self.difficulty == "medium":
+                print(f"Kein bekanntes Paar gefunden. AI:'{self.difficulty}' AI sucht zufällige Karte aus...")
+                shuffle(self.active_cards)
+                for card in self.active_cards:
+                    if card != first_card and not card.disabled:
                         second_card = card
-                        print(f"second_card = {second_card.value}")
-            else:
-                if self.difficulty == "easy" or self.difficulty == "medium":
-                    print(f"Kein bekanntes Paar gefunden. AI:'{self.difficulty}' AI sucht zufällige Karte aus...")
-                    shuffle(self.active_cards)
-                    for card in self.active_cards:
-                        if card != first_card and not card.disabled:
+                        break
+
+            elif self.difficulty == "hard" or self.difficulty == "impossible":
+                print(f"Kein bekanntes Paar gefunden. AI {self.difficulty} sucht Karte aus, die zuvor noch nicht aufgedeckt wurde.")
+                shuffle(self.active_cards)
+                for card in self.active_cards:
+                    if card != first_card and not card.disabled:
+                        if card.value not in self.known_cards:
                             second_card = card
                             break
-
-                elif self.difficulty == "hard" or self.difficulty == "impossible":
-                    print("Kein bekanntes Paar gefunden. 'Hard' AI sucht Karte aus, die zuvor noch nicht aufgedeckt wurde.")
-                    shuffle(self.active_cards)
-                    for card in self.active_cards:
-                        if card != first_card and not card.disabled:
-                            if card.value not in self.known_cards:
+                        if card.value in self.known_cards:
+                            if card not in self.known_cards[card.value]:
                                 second_card = card
                                 break
-                            if card.value in self.known_cards:
-                                if card not in self.known_cards[card.value]:
-                                    second_card = card
-                                    break
 
-        if second_card:
-            return second_card
+        if not self.error:
+            if second_card:
+                return second_card
+            else:
+                print("'second_card' nicht gefunden.")
+                return self.find_any_card()  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist.
         else:
-            print("'second_card' nicht gefunden.")
-            for card in self.game_screen.card_list:
-                if not card.disabled:
-                    if card.flipped:
-                        card.flipped = False
-            return None
+            second_card = self.find_wrong_card_nearby(first_card, second_card)  # Wenn ein Fehler gemacht werden soll, wird eine falsche Karte in der Nähe der eigentlich richtigen Karte gesucht.
+            if second_card:
+                return second_card
+            else:
+                print("'second_card' nicht gefunden.")
+                return self.find_any_card()  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist.
 
     def remember_card(self, card):
         print(f"AI merkt sich Karte {card.value}.")
@@ -222,7 +216,59 @@ class AI(Player):
             print(f"AI ({self.difficulty}) macht Fehler. ({error}/{self.error_probability})")
             return True
 
-    def find_wrong_card(self, first_card):
+    def find_wrong_card_nearby(self, first_card, second_card):
+        print("AI sucht 'logische', falsche Karte")
+        # Finde die Position der ersten Karte im 2D-Array (Spielfeld)
+        second_card_index = self.game_screen.card_list.index(second_card)
+        row_index = second_card_index // self.cols
+        col_index = second_card_index % self.cols
+
+        # Finde benachbarte Karten (links, rechts, oben, unten) im 2D-Spielfeld
+        possible_nearby_cards = []
+
+        if row_index > 0:  # obere Nachbarkarte
+            card = self.card_grid[row_index - 1][col_index]
+            if not card.disabled and card.value != first_card.value and not card.flipped:
+                possible_nearby_cards.append(card)
+            if col_index > 0:  # obere, linke Nachbarkarte
+                card = self.card_grid[row_index - 1][col_index - 1]
+                if not card.disabled and card.value != first_card.value and not card.flipped:
+                    possible_nearby_cards.append(card)
+            if col_index < self.cols - 1:  # obere, rechte Nachbarkarte
+                card = self.card_grid[row_index - 1][col_index + 1]
+                if not card.disabled and card.value != first_card.value and not card.flipped:
+                    possible_nearby_cards.append(card)
+
+        if row_index < len(self.card_grid) - 1:  # untere Nachbarkarte
+            card = self.card_grid[row_index + 1][col_index]
+            if not card.disabled and card.value != first_card.value and not card.flipped:
+                possible_nearby_cards.append(card)
+            if col_index > 0:  # untere, linke Nachbarkarte
+                card = self.card_grid[row_index + 1][col_index - 1]
+                if not card.disabled and card.value != first_card.value and not card.flipped:
+                    possible_nearby_cards.append(card)
+            if col_index < self.cols - 1:  # untere, rechte Nachbarkarte
+                card = self.card_grid[row_index + 1][col_index + 1]
+                if not card.disabled and card.value != first_card.value and not card.flipped:
+                    possible_nearby_cards.append(card)
+
+        if col_index > 0:  # linke Nachbarkarte
+            card = self.card_grid[row_index][col_index - 1]
+            if not card.disabled and card.value != first_card.value and not card.flipped:
+                possible_nearby_cards.append(card)
+        if col_index < self.cols - 1:  # rechte Nachbarkarte
+            card = self.card_grid[row_index][col_index + 1]
+            if not card.disabled and card.value != first_card.value and not card.flipped:
+                possible_nearby_cards.append(card)
+
+        # Wähle eine zufällige Nachbarkarte, die nicht die richtige Karte ist
+        if possible_nearby_cards:
+            shuffle(possible_nearby_cards)
+            return possible_nearby_cards[0]
+        return self.find_random_wrong_card(first_card)  # Falls keine passende Karte gefunden wurde, wähle eine beliebige, falsche Karte
+
+    def find_random_wrong_card(self, first_card):
+        print("Suche zufällige, falsche Karte")
         shuffle(self.active_cards)
         for card in self.active_cards:
             if not card.disabled and not card.value == first_card.value and not card == first_card:
@@ -234,22 +280,30 @@ class AI(Player):
                 print("Erstbeste Karte gefunden.")
                 return card
 
+    def find_any_card(self):
+        for card in self.game_screen.card_list:  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist.
+            if not card.disabled:
+                if not card.flipped:
+                    return card
+        return None
+
+    def create_card_grid(self):
+        card_grid = [self.game_screen.card_list[i:i + self.cols] for i in range(0, len(self.game_screen.card_list), self.cols)]
+        for row in card_grid:
+            print([card.value for card in row])
+        return card_grid
+
     def reset(self):
         self.score = 0
         self.turns = 0
         self.known_cards.clear()
         self.game_screen = self.app.root.get_screen("game")
         self.difficulty = self.game_screen.current_difficulty
-        if self.difficulty == "easy":
-            self.error_probability = 50
-        elif self.difficulty == "medium":
-            self.error_probability = 25
-        elif self.difficulty == "hard":
-            self.error_probability = 5
-        elif self.difficulty == "impossible":
-            self.error_probability = 0
+        self.error_probability = {"easy": 35, "medium": 15, "hard": 5, "impossible": 0}[self.difficulty]
         self.active_cards.clear()
         self.active_cards = self.game_screen.card_list.copy()
+        self.cols = self.game_screen.cols
+        self.card_grid = self.create_card_grid()
 
 
 class Card(ButtonBehavior, Image):
@@ -908,7 +962,7 @@ class SettingsScreen(Screen):
         save_settings(new_setting)
 
     def decrease_ai_timeout(self):
-        if self.ai_timeout > 0.1 and self.ai_timeout > round((self.hide_cards_timeout + 0.1)):
+        if self.ai_timeout > 0.1 and self.ai_timeout >= round((self.hide_cards_timeout + 0.1)):
             self.ai_timeout -= 0.1
             self.ai_timeout = round(self.ai_timeout, 1)
             new_setting = ("ai_timeout", self.ai_timeout)
@@ -918,10 +972,11 @@ class SettingsScreen(Screen):
         self.hide_cards_timeout_label.text = f"Karten verdecken: {self.hide_cards_timeout} (Standard = 0.8)"
 
     def increase_hide_cards_timeout(self):
-        self.hide_cards_timeout += 0.1  # Verzögerung vom Verdecken falsch aufgedeckter Karten
-        self.hide_cards_timeout = round(self.hide_cards_timeout, 1)
-        new_setting = ("hide_cards_timeout", self.hide_cards_timeout)
-        save_settings(new_setting)
+        if self.hide_cards_timeout >= round((self.ai_timeout - 0.1)):  # Verzögerung vom Verdecken falsch aufgedeckter Karten
+            self.hide_cards_timeout += 0.1
+            self.hide_cards_timeout = round(self.hide_cards_timeout, 1)
+            new_setting = ("hide_cards_timeout", self.hide_cards_timeout)
+            save_settings(new_setting)
 
     def decrease_hide_cards_timeout(self):
         if self.hide_cards_timeout > 0.1:
