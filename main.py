@@ -1030,12 +1030,8 @@ class PicsSelectScreen(Screen):
     bundesliga_box = ObjectProperty()
     own_landscapes_label = ObjectProperty()
     own_landscapes_box = ObjectProperty()
-    tanks_label = ObjectProperty()
-    tanks_box = ObjectProperty()
     sexy_label = ObjectProperty()
     sexy_box = ObjectProperty()
-    universe_label = ObjectProperty()
-    universe_box = ObjectProperty()
     random_label = ObjectProperty()
     random_box = ObjectProperty()
 
@@ -1046,9 +1042,7 @@ class PicsSelectScreen(Screen):
         self.cars_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.bundesliga_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.own_landscapes_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.tanks_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.sexy_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.universe_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.random_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
 
         with self.canvas.before:
@@ -1065,9 +1059,7 @@ class PicsSelectScreen(Screen):
         save_pics_lists("car_images", self.cars_box.state)
         save_pics_lists("bundesliga_images", self.bundesliga_box.state)
         save_pics_lists("own_landscape_images", self.own_landscapes_box.state)
-        save_pics_lists("tank_images", self.tanks_box.state)
         save_pics_lists("sexy_images", self.sexy_box.state)
-        save_pics_lists("universe_images", self.universe_box.state)
         save_pics_lists("random_images", self.random_box.state)
 
     def load_checkbox_statuses(self):
@@ -1076,9 +1068,7 @@ class PicsSelectScreen(Screen):
         self.cars_box.state = checkboxes["car_images"]
         self.bundesliga_box.state = checkboxes["bundesliga_images"]
         self.own_landscapes_box.state = checkboxes["own_landscape_images"]
-        self.tanks_box.state = checkboxes["tank_images"]
         self.sexy_box.state = checkboxes["sexy_images"]
-        self.universe_box.state = checkboxes["universe_images"]
         self.random_box.state = checkboxes["random_images"]
 
     def on_pre_enter(self, *args):

@@ -8,9 +8,7 @@ default_pics = {
     "car_images": "down",
     "bundesliga_images": "down",
     "own_landscape_images": "down",
-    "tank_images": "down",
     "sexy_images": "down",
-    "universe_images": "down",
     "random_images": "down"
 }
 
