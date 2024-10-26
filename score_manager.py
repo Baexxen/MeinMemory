@@ -16,6 +16,9 @@ default_scores = {
     "battle_hard_small": 0,
     "battle_hard_medium": 0,
     "battle_hard_big": 0,
+    "battle_impossible_small": 0,
+    "battle_impossible_medium": 0,
+    "battle_impossible_big": 0,
     "time_race_easy_small": 997,
     "time_race_easy_medium": 998,
     "time_race_easy_big": 999

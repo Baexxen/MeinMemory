@@ -196,6 +196,7 @@
     easy_button: easy_button
     medium_button: medium_button
     hard_button: hard_button
+    impossible_button: impossible_button
     small: small
     medium: medium
     big: big
@@ -236,6 +237,14 @@
                 id: hard_button
                 on_release:
                     root.update_diff_buttons(3)
+            Button:
+                text: "Unmöglich"
+                background_normal: ""
+                background_color: app.light_blue
+                disabled_color: app.beige
+                id: impossible_button
+                on_release:
+                    root.update_diff_buttons(4)
         ################ Spielfeldgröße ######################################
         BoxLayout:
             orientation: "horizontal"
@@ -309,12 +318,12 @@
             LabelBackgroundColor:
                 text: "Touch-Delay: 10 (Standard = 10)"
                 id: touch_delay_label
-                size_hint: 0.6, 1
+                size_hint: 0.8, 1
             Button:
                 text: "+"
                 background_normal: ""
                 background_color: app.light_blue
-                size_hint: 0.2, 1
+                size_hint: 0.1, 1
                 on_release:
                     root.increase_touch_delay()
                     root.change_touch_delay_label_text()
@@ -322,7 +331,7 @@
                 text: "-"
                 background_normal: ""
                 background_color: app.light_blue
-                size_hint: 0.2, 1
+                size_hint: 0.1, 1
                 on_release:
                     root.decrease_touch_delay()
                     root.change_touch_delay_label_text()
@@ -333,12 +342,12 @@
             LabelBackgroundColor:
                 text: "AI Timeout: 1.0 (Standard = 1.0)"
                 id: ai_timeout_label
-                size_hint: 0.6, 1
+                size_hint: 0.8, 1
             Button:
                 text: "+"
                 background_normal: ""
                 background_color: app.light_blue
-                size_hint: 0.2, 1
+                size_hint: 0.1, 1
                 on_release:
                     root.increase_ai_timeout()
                     root.change_ai_timeout_label_text()
@@ -346,7 +355,7 @@
                 text: "-"
                 background_normal: ""
                 background_color: app.light_blue
-                size_hint: 0.2, 1
+                size_hint: 0.1, 1
                 on_release:
                     root.decrease_ai_timeout()
                     root.change_ai_timeout_label_text()
@@ -357,12 +366,12 @@
             LabelBackgroundColor:
                 text: "Karten verdecken: 0.8 (Standard = 0.8)"
                 id: hide_cards_timeout_label
-                size_hint: 0.6, 1
+                size_hint: 0.8, 1
             Button:
                 text: "+"
                 background_normal: ""
                 background_color: app.light_blue
-                size_hint: 0.2, 1
+                size_hint: 0.1, 1
                 on_release:
                     root.increase_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
@@ -370,7 +379,7 @@
                 text: "-"
                 background_normal: ""
                 background_color: app.light_blue
-                size_hint: 0.2, 1
+                size_hint: 0.1, 1
                 on_release:
                     root.decrease_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
