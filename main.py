@@ -594,7 +594,7 @@ class GameScreen(Screen):
                     print("Spieler wird gewechselt")
                     self.switch_player()
                     if self.current_player == self.ai:
-                        players_last_cards = []
+                        players_last_cards = [first_card, second_card]
                         Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout)
         self.update()
 
