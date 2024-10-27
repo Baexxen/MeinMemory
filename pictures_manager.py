@@ -22,7 +22,7 @@ def save_pics_lists(updated_pics_list, state):
     with open(pics_lists_file_path, 'r+') as file:
         if updated_pics_list in pics_lists:
             pics_lists[updated_pics_list] = state
-            print(f"Bilderlisten wurden geändert. {pics_lists}")
+            # print(f"Bilderlisten wurden geändert. {pics_lists}")
             json.dump(pics_lists, file, indent=4)
         else:
             print(f"Bilderliste ({updated_pics_list}) wurde nicht erkannt.")
@@ -52,14 +52,14 @@ def load_pics_lists():
                 return pics_lists
 
             except json.JSONDecodeError:
-                print("Fehler beim Laden der Einstellungen. Datei wird zurückgesetzt.")
+                print("Fehler beim Laden der Bilder 'json' Datei. Datei wird zurückgesetzt.")
                 # Dateiinhalt zurücksetzen
                 file.seek(0)
                 json.dump(default_pics, file, indent=4)
                 file.truncate()
                 return default_pics
     else:
-        print("Einstellungen nicht gefunden. Neue Datei wird erstellt.")
+        print("Bilder 'json' Datei nicht gefunden. Neue Datei wird erstellt.")
         with open(pics_lists_file_path, "w") as file:
             json.dump(default_pics, file, indent=4)
         return default_pics

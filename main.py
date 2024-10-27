@@ -442,6 +442,7 @@ class GameScreen(Screen):
         shuffle(self.app.pics_list)
         shuffle(card_values)
         self.card_list.clear()
+        print(f"Anzahl der Bilder: {len(self.app.pics_list)}####################################################################")
         for value in card_values:
             card = Card(value)
             self.memory_grid.add_widget(card)
@@ -1124,6 +1125,7 @@ class MyMemoryApp(App):
         self.root.current = "main_menu"
         Clock.schedule_once(self.force_redraw, 0.1)  # Eventuell eine leichte Verzögerung hinzufügen
         self.game_screen = self.root.get_screen("game")
+        self.load_pictures()
 
     def start_new_game(self, cards_count, game_mode="standard", difficulty="easy"):
         print(f"MyMemoryApp start new game {game_mode} {difficulty}")
@@ -1131,7 +1133,7 @@ class MyMemoryApp(App):
         self.current_difficulty = difficulty
         self.game_screen.current_difficulty = self.current_difficulty
         self.game_screen.cards = cards_count
-        self.load_pictures()
+
         self.load_active_pics_lists()
         self.game_screen.restart_game()
         self.root.current = "game"
@@ -1159,7 +1161,7 @@ class MyMemoryApp(App):
         Window.size = (Window.size[0] - 1, Window.size[1] - 1)
 
     def load_active_pics_lists(self):
-        self.pics_list = []
+        self.pics_list.clear()
         lists_selected = 0
         all_pics_lists = load_pics_lists()
         if all_pics_lists["akira_images"] == "down":
@@ -1183,6 +1185,7 @@ class MyMemoryApp(App):
 
         if lists_selected == 0:
             reset_selected_pics_lists()
+            self.pics_list.clear()
             self.pics_list.extend(self.akira_images)
             self.pics_list.extend(self.car_images)
             self.pics_list.extend(self.bundesliga_images)
