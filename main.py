@@ -442,7 +442,6 @@ class GameScreen(Screen):
         shuffle(self.app.pics_list)
         shuffle(card_values)
         self.card_list.clear()
-        print(f"Anzahl der Bilder: {len(self.app.pics_list)}####################################################################")
         for value in card_values:
             card = Card(value)
             self.memory_grid.add_widget(card)
