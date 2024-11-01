@@ -7,12 +7,7 @@ from kivy.uix.button import Button
 from kivy.graphics import Color, Rectangle
 from kivy.core.window import Window
 
-WHITE = (1, 1, 1, 1)
-BLACK = (0, 0, 0, 1)
-BEIGE = (1, 0.77, 0.59, 1)
-DARK_RED = (0.53, 0.09, 0.09, 1)
-ORANGE = (0.95, 0.7, 0.21, 1)
-LIGHT_BLUE = (0.08, 0.54, 0.64, 1)
+from main import WHITE, BLACK, BEIGE, DARK_RED, ORANGE, LIGHT_BLUE, DARK_BLUE
 
 
 class MyScatter(ScatterPlane):
