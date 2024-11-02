@@ -36,7 +36,7 @@ def load_settings():
             try:
                 settings = json.load(file)
                 # Überprüfen, ob alle Keys vorhanden sind
-                for key in default_settings:
+                for key in settings:
                     if key not in settings:
                         print(f"{key} nicht gefunden, wird mit 'Default-Wert' ersetzt.")
                         settings[key] = default_settings[key]

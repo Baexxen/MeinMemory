@@ -180,6 +180,11 @@
       <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a_x86_64/dists/meinmemory/jni/SDL2_ttf/external/freetype/subprojects/dlg" />
       <excludeFolder url="file://$MODULE_DIR$/.buildozer/applibs" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/gfx" />
+      <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/pics/Akira" />
+      <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/pics/Autos" />
+      <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/pics/EigeneLandschaften" />
+      <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/pics/Verschiedenes" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -1,6 +1,5 @@
 import random
 import sys
-from tabnanny import check
 
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition, FadeTransition, SwapTransition, WipeTransition, CardTransition, SlideTransition, ShaderTransition, RiseInTransition, FallOutTransition, TransitionBase
@@ -12,11 +11,12 @@ from kivy.properties import NumericProperty
 from kivy.properties import ObjectProperty
 from kivy.properties import ListProperty
 from kivy.graphics import Color, Rectangle
+from kivy.utils import platform
 from random import shuffle, randint
 from math import sqrt
+from jnius import autoclass
 import os
 import logging
-import platform
 import time
 
 # Highscore
@@ -48,8 +48,195 @@ DARK_RED = (0.53, 0.09, 0.09, 1)
 ORANGE = (0.95, 0.7, 0.21, 1)
 LIGHT_BLUE = (0.08, 0.54, 0.64, 1)
 DARK_BLUE = (0.04, 0.27, 0.32, 1)
+GREY = (0.48, 0.48, 0.48, 1)
+
+WINDOW_CLEARCOLOR_THEME = {
+    "light": ORANGE,
+    "dark": DARK_BLUE,
+    "color": LIGHT_BLUE
+}
+
+CARD_COVER_THEME = {
+    "light": "pics/Default_light.png",
+    "dark": "pics/Default_dark.png",
+    "color": "pics/Default.png"
+}
 
 Window.clearcolor = LIGHT_BLUE
+if platform == "linux":
+    Window.size = (600, 800)
+    Window.left = 600
+    Window.top = 150
+
+
+# noinspection PyUnusedLocal
+class MyMemoryApp(App):
+    print("MyMemoryApp")
+    white = ListProperty([1, 1, 1, 1])
+    black = ListProperty([0, 0, 0, 1])
+    beige = ListProperty([1, 0.77, 0.59, 1])
+    dark_red = ListProperty([0.53, 0.09, 0.09, 1])
+    orange = ListProperty([0.95, 0.7, 0.21, 1])
+    light_blue = ListProperty([0.08, 0.54, 0.64, 1])
+    dark_blue = ListProperty([0.04, 0.27, 0.32, 1])
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.current_difficulty = "easy"
+        self.game_screen = None
+        self.pics_list = []
+        self.car_images = []
+        self.akira_images = []
+        self.bundesliga_images = []
+        self.own_landscape_images = []
+        self.sexy_images = []
+        self.random_images = []
+        self.theme = "color"
+        self.theme_color = "color"
+        self.button_list = []
+        self.label_list = []
+
+    def build(self):
+        print("MyMemoryApp build")
+        # Transitions: NoTransition, FadeTransition, SwapTransition, WipeTransition, CardTransition, SlideTransition, ShaderTransition, RiseInTransition, FallOutTransition, TransitionBase
+        sm = ScreenManager(transition=NoTransition())  # Disable transition
+        sm.add_widget(GameScreen(name="game"))
+        sm.add_widget(MainMenuScreen(name="main_menu"))
+        sm.add_widget(StandardModeScreen(name="standard_mode"))
+        sm.add_widget(TimeModeScreen(name="time_mode"))
+        sm.add_widget(TimeRaceScreen(name="time_race"))
+        sm.add_widget(MultiplayerScreen(name="multiplayer_mode"))
+        sm.add_widget(DuellModeScreen(name="duell_mode"))
+        sm.add_widget(BattleModeScreen(name="battle_mode"))
+        sm.add_widget(SettingsScreen(name="settings"))
+        sm.add_widget(PicsSelectScreen(name="pics_select"))
+        sm.current = "main_menu"
+        sm.transition = SwapTransition()
+        return sm
+
+    def on_start(self):
+        logging.debug("App started")
+        print("MyMemoryApp on_start")
+        self.icon = "pics/icon.ico"
+        self.root.current = "main_menu"
+        Clock.schedule_once(self.force_redraw, 0.1)  # Eventuell eine leichte Verzögerung hinzufügen
+        self.game_screen = self.root.get_screen("game")
+        self.load_pictures()
+        Clock.schedule_once(self.load_settings, .2)
+
+    def start_new_game(self, cards_count, game_mode="standard", difficulty="easy"):
+        print(f"MyMemoryApp start new game {game_mode} {difficulty}")
+        self.game_screen.current_game_mode = game_mode
+        self.current_difficulty = difficulty
+        self.game_screen.current_difficulty = self.current_difficulty
+        self.game_screen.cards = cards_count
+
+        self.load_active_pics_lists()
+        self.game_screen.restart_game()
+        self.root.current = "game"
+
+        if game_mode == "standard":
+            pass
+
+        elif game_mode == "time_race":
+            pass
+
+        elif game_mode == "battle":
+            pass
+
+    def continue_game(self):
+        settings = load_settings()
+        game_screen = self.root.get_screen("game")
+        game_screen.active_touches.clear()
+        game_screen.touch_delay = settings["touch_delay"]
+        self.root.current = "game"
+
+    def force_redraw(self, dt):
+        # Erzwinge ein erneutes Rendern des aktuellen Screens
+        self.title = "MeinMemory"
+        Window.size = (Window.size[0] + 1, Window.size[1] + 1)
+        Window.size = (Window.size[0] - 1, Window.size[1] - 1)
+
+    def change_theme_color(self, theme_color):
+        self.theme_color = theme_color
+        Window.clearcolor = WINDOW_CLEARCOLOR_THEME[theme_color]
+        for button in self.button_list:
+            button.change_theme(self.theme_color)
+        for label in self.label_list:
+            label.change_theme(self.theme_color)
+
+    def load_settings(self, *args):
+        settings = load_settings()
+        self.theme = settings["theme"]
+        self.theme_color = get_theme_color(self.theme)
+        for button in self.button_list:
+            button.change_theme(self.theme_color)
+        for label in self.label_list:
+            label.change_theme(self.theme_color)
+
+    def load_active_pics_lists(self):
+        self.pics_list.clear()
+        lists_selected = 0
+        all_pics_lists = load_pics_lists()
+        if all_pics_lists["akira_images"] == "down":
+            self.pics_list.extend(self.akira_images)
+            lists_selected += 1
+        if all_pics_lists["car_images"] == "down":
+            self.pics_list.extend(self.car_images)
+            lists_selected += 1
+        if all_pics_lists["bundesliga_images"] == "down":
+            self.pics_list.extend(self.bundesliga_images)
+            lists_selected += 1
+        if all_pics_lists["own_landscape_images"] == "down":
+            self.pics_list.extend(self.own_landscape_images)
+            lists_selected += 1
+        if all_pics_lists["sexy_images"] == "down":
+            self.pics_list.extend(self.sexy_images)
+            lists_selected += 1
+        if all_pics_lists["random_images"] == "down":
+            self.pics_list.extend(self.random_images)
+            lists_selected += 1
+
+        if lists_selected == 0:
+            reset_selected_pics_lists()
+            self.pics_list.clear()
+            self.pics_list.extend(self.akira_images)
+            self.pics_list.extend(self.car_images)
+            self.pics_list.extend(self.bundesliga_images)
+            self.pics_list.extend(self.own_landscape_images)
+            self.pics_list.extend(self.sexy_images)
+            self.pics_list.extend(self.random_images)
+
+    def load_pictures(self):
+        print("MyMemoryApp: load_pictures")
+        paths = {
+            "pics/Akira": self.akira_images,
+            "pics/Autos": self.car_images,
+            "pics/Bundesliga": self.bundesliga_images,
+            "pics/EigeneLandschaften": self.own_landscape_images,
+            "pics/Sexy": self.sexy_images,
+            "pics/Verschiedenes": self.random_images,
+        }
+
+        for path, image_list in paths.items():
+            for file_name in os.listdir(path):
+                if file_name.endswith(".png"):
+                    full_path = os.path.join(path, file_name)
+                    image_list.append(full_path)
+
+    def get_score_file_path(self):
+        return os.path.join(self.user_data_dir, "highscores.json")
+
+    def get_settings_file_path(self):
+        return os.path.join(self.user_data_dir, "settings.json")
+
+    def get_pics_lists_file_path(self):
+        return os.path.join(self.user_data_dir, "pics_lists.json")
+
+    def exit_app(self):
+        print("Es wird über 'MyMemoryApp' geschlossen.")
+        self.get_running_app().stop()
+        sys.exit()
 
 
 class Player:
@@ -325,7 +512,7 @@ class Card(ButtonBehavior, Image):
     def __init__(self, value, **kwargs):
         super().__init__(**kwargs)
         self.value = value
-        self.default_pic = "pics/Default.png"
+
         self.flipped = False
         self.background_normal = ""
         self.bind(card_size=self.update_size)
@@ -377,6 +564,9 @@ class Card(ButtonBehavior, Image):
             parent = parent.parent
         return None
 
+    def update_theme(self, theme_color):
+        self.default_pic = CARD_COVER_THEME[theme_color]
+
 
 # region Screens #################################################################################################
 class GameScreen(Screen):
@@ -411,6 +601,7 @@ class GameScreen(Screen):
         self.current_difficulty = "easy"
         self.scatter.game_screen = self
         self.game_over = True
+        self.game_running = False
         self.current_game_mode = "standard"
         self.input_enabled = True
         self.cols = 4
@@ -419,6 +610,7 @@ class GameScreen(Screen):
         self.ai_timeout = 1.0  # Verzögerung der AI-Aktionen (Karten aufdecken)
         self.hide_cards_timeout = 0.8  # Verzögerung beim Zudecken falsch aufgedeckter Karten
         self.touch_delay = 10  # Verzögerung bei Erkennung von 'Touch-Move'
+        self.theme_color = "color"
         self.load_settings()
 
     def restart_game(self):
@@ -451,9 +643,11 @@ class GameScreen(Screen):
             card.pic = self.app.pics_list[value - 1]
             card.background_disabled_normal = card.pic
             card.background_down = card.pic
+            card.default_pic = CARD_COVER_THEME[self.theme_color]
             self.card_list.append(card)
 
         self.game_over = False
+        self.game_running = True
         self.player.reset()
         self.player2.reset()
         self.ai.reset()
@@ -488,6 +682,7 @@ class GameScreen(Screen):
 
         if count_found_cards == len(self.card_list) and not self.game_over:
             self.game_over = True
+            self.game_running = False
             self.top_label.text = "Game Over"
 
         if self.game_over:
@@ -688,6 +883,12 @@ class GameScreen(Screen):
         self.touch_delay = settings["touch_delay"]
         self.ai_timeout = settings["ai_timeout"]
         self.hide_cards_timeout = settings["hide_cards_timeout"]
+        theme = settings["theme"]
+        self.theme_color = get_theme_color(theme)
+        self.memory_grid.redraw(self.theme_color)
+        for card in self.card_list:
+            card.update_theme(self.theme_color)
+        self.update()
 
     def on_pre_leave(self, *args):
         if self.current_game_mode == "time_race" and self.time_race_running:
@@ -696,6 +897,7 @@ class GameScreen(Screen):
 
     def on_pre_enter(self, *args):
         self.load_settings()
+        self.reset_widgets()
         if self.current_game_mode == "time_race" and self.time_race_running:
             self.start_time_count_up()
         return super().on_pre_enter()
@@ -704,6 +906,13 @@ class GameScreen(Screen):
 class MainMenuScreen(Screen):
     print("MainMenuScreen")
     continue_button = ObjectProperty(None)
+    standard_button = ObjectProperty(None)
+    time_button = ObjectProperty(None)
+    multiplayer_button = ObjectProperty(None)
+    settings_button = ObjectProperty(None)
+    exit_button = ObjectProperty(None)
+
+    top_label = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -711,23 +920,27 @@ class MainMenuScreen(Screen):
             Color(rgba=ORANGE)
             self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
+        self.theme = "color"
+        self.theme_color = "color"
+        self.button_list = [self.continue_button, self.standard_button, self.time_button, self.multiplayer_button, self.settings_button, self.exit_button]
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
 
-    def update_continue_button(self, game_over):
-        if game_over:
-            self.continue_button.disabled = True
-        else:
+    def update_continue_button(self, game_running):
+        if game_running:
             self.continue_button.disabled = False
+        else:
+            self.continue_button.disabled = True
+        self.continue_button.redraw()
 
     def on_pre_enter(self, *args):
         app = App.get_running_app()
         app_root = app.root
         if app_root:
             game_screen = app_root.get_screen("game")
-            self.update_continue_button(game_screen.game_over)
+            self.update_continue_button(game_screen.game_running)
 
 
 class StandardModeScreen(Screen):
@@ -824,20 +1037,16 @@ class BattleModeScreen(Screen):
         super().__init__(**kwargs)
         Clock.schedule_once(self.update_diff_buttons, 0.1)
         self.easy_button.disabled = True
-        self.easy_button.background_color = WHITE
-        self.easy_button.background_disabled_normal = "pics/dark_blue.png"
-        self.easy_button.background_disabled_down = "pics/white.png"
         self.current_difficulty = "easy"
         self.small.disabled = True
         self.current_board_size = 16
-        self.small.background_color = WHITE
-        self.small.background_disabled_normal = "pics/dark_blue.png"
-        self.small.background_disabled_down = "pics/white.png"
-
+        self.button_list = [self.easy_button, self.medium_button, self.hard_button, self.impossible_button, self.small, self.medium, self.big]
         with self.canvas.before:
             Color(rgba=ORANGE)
             self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
+        self.theme = "color"
+        self.theme_color = "color"
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -851,105 +1060,86 @@ class BattleModeScreen(Screen):
         if pushed_button == 1:
             self.easy_button.disabled = True
             self.current_difficulty = "easy"
-            self.easy_button.background_color = WHITE
-            self.easy_button.background_disabled_normal = "pics/dark_blue.png"
-            self.easy_button.background_disabled_down = "pics/white.png"
             self.medium_button.disabled = False
-            self.medium_button.background_color = LIGHT_BLUE
             self.hard_button.disabled = False
-            self.hard_button.background_color = LIGHT_BLUE
             self.impossible_button.disabled = False
-            self.impossible_button.background_color = LIGHT_BLUE
         elif pushed_button == 2:
             self.easy_button.disabled = False
-            self.easy_button.background_color = LIGHT_BLUE
             self.medium_button.disabled = True
             self.current_difficulty = "medium"
-            self.medium_button.background_color = WHITE
-            self.medium_button.background_disabled_normal = "pics/dark_blue.png"
-            self.medium_button.background_disabled_down = "pics/white.png"
             self.hard_button.disabled = False
-            self.hard_button.background_color = LIGHT_BLUE
             self.impossible_button.disabled = False
-            self.impossible_button.background_color = LIGHT_BLUE
         elif pushed_button == 3:
             self.easy_button.disabled = False
-            self.easy_button.background_color = LIGHT_BLUE
             self.medium_button.disabled = False
-            self.medium_button.background_color = LIGHT_BLUE
             self.hard_button.disabled = True
             self.current_difficulty = "hard"
-            self.hard_button.background_color = WHITE
-            self.hard_button.background_disabled_normal = "pics/dark_blue.png"
-            self.hard_button.background_disabled_down = "pics/white.png"
             self.impossible_button.disabled = False
-            self.impossible_button.background_color = LIGHT_BLUE
         elif pushed_button == 4:
             self.easy_button.disabled = False
-            self.easy_button.background_color = LIGHT_BLUE
             self.medium_button.disabled = False
-            self.medium_button.background_color = LIGHT_BLUE
             self.hard_button.disabled = False
-            self.hard_button.background_color = LIGHT_BLUE
             self.impossible_button.disabled = True
             self.current_difficulty = "impossible"
-            self.impossible_button.background_color = WHITE
-            self.impossible_button.background_disabled_normal = "pics/dark_blue.png"
-            self.impossible_button.background_disabled_down = "pics/white.png"
+        for button in self.button_list:
+            button.redraw()
 
     def update_board_size_buttons(self, pushed_button=1):
         if pushed_button == 1:
             self.small.disabled = True
             self.current_board_size = 16
-            self.small.background_color = WHITE
-            self.small.background_disabled_normal = "pics/dark_blue.png"
-            self.small.background_disabled_down = "pics/white.png"
             self.medium.disabled = False
-            self.medium.background_color = LIGHT_BLUE
             self.big.disabled = False
-            self.big.background_color = LIGHT_BLUE
         elif pushed_button == 2:
             self.small.disabled = False
-            self.small.background_color = LIGHT_BLUE
             self.medium.disabled = True
             self.current_board_size = 36
-            self.medium.background_color = WHITE
-            self.medium.background_disabled_normal = "pics/dark_blue.png"
-            self.medium.background_disabled_down = "pics/white.png"
             self.big.disabled = False
-            self.big.background_color = LIGHT_BLUE
         elif pushed_button == 3:
             self.small.disabled = False
-            self.small.background_color = LIGHT_BLUE
             self.medium.disabled = False
-            self.medium.background_color = LIGHT_BLUE
             self.big.disabled = True
             self.current_board_size = 64
-            self.big.background_color = WHITE
-            self.big.background_disabled_normal = "pics/dark_blue.png"
-            self.big.background_disabled_down = "pics/white.png"
+        for button in self.button_list:
+            button.redraw()
+
+    def on_pre_enter(self, *args):
+        settings = load_settings()
+        self.theme = settings["theme"]
+        self.theme_color = get_theme_color(self.theme)
+        for button in self.button_list:
+            button.change_theme(self.theme_color)
 
 
 class SettingsScreen(Screen):
     print("SettingsScreen")
-    top_label = ObjectProperty()
-    touch_delay_label = ObjectProperty()
-    ai_timeout_label = ObjectProperty()
-    hide_cards_timeout_label = ObjectProperty()
+    top_label = ObjectProperty(None)
+    theme_label = ObjectProperty(None)
+    light_theme_button = ObjectProperty(None)
+    dark_theme_button = ObjectProperty(None)
+    system_theme_button = ObjectProperty(None)
+    color_theme_button = ObjectProperty(None)
+    touch_delay_label = ObjectProperty(None)
+    ai_timeout_label = ObjectProperty(None)
+    hide_cards_timeout_label = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.app = None
         self.game_screen = None
+        self.theme = "color"  # Eigentlicher 'Theme'-Name (Unterscheidung wegen 'System-Theme')
+        self.theme_color = "color"  # Tatsächliche Theme-'Farbe'
         self.touch_delay = 10
         self.ai_timeout = 1.0
         self.hide_cards_timeout = 0.8
         self.load_settings()
         self.top_label.redraw(ORANGE, WHITE, False, WHITE, 5)
+        self.theme_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.touch_delay_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.ai_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.hide_cards_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.button_list = [self.light_theme_button, self.dark_theme_button, self.system_theme_button, self.color_theme_button]
 
         with self.canvas.before:
             Color(rgba=ORANGE)
@@ -961,6 +1151,7 @@ class SettingsScreen(Screen):
         self.change_hide_cards_timeout_label_text()
         self.change_ai_timeout_label_text()
         self.change_touch_delay_label_text()
+        self.change_button_states(self.theme)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -968,9 +1159,91 @@ class SettingsScreen(Screen):
 
     def load_settings(self):
         settings = load_settings()
+        self.theme = settings["theme"]
+        self.theme_color = get_theme_color(self.theme)
+        if self.app is not None:
+            self.app.change_theme_color(self.theme_color)
+        else:
+            self.app = App.get_running_app()
+            self.app.change_theme_color(self.theme_color)
+
         self.touch_delay = settings["touch_delay"]
         self.ai_timeout = settings["ai_timeout"]
         self.hide_cards_timeout = settings["hide_cards_timeout"]
+
+    def change_button_states(self, theme):
+        button = 0
+        if theme == "light":
+            self.light_theme_button.disabled = True
+            self.dark_theme_button.disabled = False
+            self.system_theme_button.disabled = False
+            self.color_theme_button.disabled = False
+            button = 0
+        elif theme == "dark":
+            self.light_theme_button.disabled = False
+            self.dark_theme_button.disabled = True
+            self.system_theme_button.disabled = False
+            self.color_theme_button.disabled = False
+            button = 1
+        elif theme == "system":
+            self.light_theme_button.disabled = False
+            self.dark_theme_button.disabled = False
+            self.system_theme_button.disabled = True
+            self.color_theme_button.disabled = False
+            button = 2
+        elif theme == "color":
+            self.light_theme_button.disabled = False
+            self.dark_theme_button.disabled = False
+            self.system_theme_button.disabled = False
+            self.color_theme_button.disabled = True
+            button = 3
+        self.update_theme_buttons(button)
+
+    def update_theme_buttons(self, button_id):
+        if button_id == 0:
+            self.light_theme_button.disabled = True
+            self.theme = "light"
+            self.theme_color = "light"
+            self.dark_theme_button.disabled = False
+            self.system_theme_button.disabled = False
+            self.color_theme_button.disabled = False
+        elif button_id == 1:
+            self.light_theme_button.disabled = False
+            self.dark_theme_button.disabled = True
+            self.theme = "dark"
+            self.theme_color = "dark"
+            self.system_theme_button.disabled = False
+            self.color_theme_button.disabled = False
+        elif button_id == 2:
+            self.light_theme_button.disabled = False
+            self.dark_theme_button.disabled = False
+            self.system_theme_button.disabled = True
+            is_dark_theme = which_theme()
+            # noinspection PySimplifyBooleanCheck
+            if is_dark_theme is True:
+                self.theme_color = "dark"
+            elif is_dark_theme is False:
+                self.theme_color = "light"
+            else:
+                self.theme_color = "color"
+            self.theme = "system"
+            self.color_theme_button.disabled = False
+        elif button_id == 3:
+            self.light_theme_button.disabled = False
+            self.dark_theme_button.disabled = False
+            self.system_theme_button.disabled = False
+            self.color_theme_button.disabled = True
+            self.theme = "color"
+            self.theme_color = "color"
+
+        if self.app is not None:
+            self.app.change_theme_color(self.theme_color)
+        else:
+            self.app = App.get_running_app()
+            self.app.change_theme_color(self.theme_color)
+
+        new_setting = ("theme", self.theme)
+        save_settings(new_setting)
 
     def change_touch_delay_label_text(self):
         self.touch_delay_label.text = f"Touch-Delay: {self.touch_delay} (Standard = 10)"
@@ -1076,159 +1349,44 @@ class PicsSelectScreen(Screen):
 # endregion
 
 
-# noinspection PyUnusedLocal
-class MyMemoryApp(App):
-    print("MyMemoryApp")
-    white = ListProperty([1, 1, 1, 1])
-    black = ListProperty([0, 0, 0, 1])
-    beige = ListProperty([1, 0.77, 0.59, 1])
-    dark_red = ListProperty([0.53, 0.09, 0.09, 1])
-    orange = ListProperty([0.95, 0.7, 0.21, 1])
-    light_blue = ListProperty([0.08, 0.54, 0.64, 1])
-    dark_blue = ListProperty([0.04, 0.27, 0.32, 1])
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.current_difficulty = "easy"
-        self.game_screen = None
-        self.pics_list = []
-        self.car_images = []
-        self.akira_images = []
-        self.bundesliga_images = []
-        self.own_landscape_images = []
-        self.sexy_images = []
-        self.random_images = []
-
-    def build(self):
-        print("MyMemoryApp build")
-        # Transitions: NoTransition, FadeTransition, SwapTransition, WipeTransition, CardTransition, SlideTransition, ShaderTransition, RiseInTransition, FallOutTransition, TransitionBase
-        sm = ScreenManager(transition=NoTransition())  # Disable transition
-        sm.add_widget(GameScreen(name="game"))
-        sm.add_widget(MainMenuScreen(name="main_menu"))
-        sm.add_widget(StandardModeScreen(name="standard_mode"))
-        sm.add_widget(TimeModeScreen(name="time_mode"))
-        sm.add_widget(TimeRaceScreen(name="time_race"))
-        sm.add_widget(MultiplayerScreen(name="multiplayer_mode"))
-        sm.add_widget(DuellModeScreen(name="duell_mode"))
-        sm.add_widget(BattleModeScreen(name="battle_mode"))
-        sm.add_widget(SettingsScreen(name="settings"))
-        sm.add_widget(PicsSelectScreen(name="pics_select"))
-        sm.current = "main_menu"
-        sm.transition = SwapTransition()
-        return sm
-
-    def on_start(self):
-        logging.debug("App started")
-        print("MyMemoryApp on_start")
-        self.icon = "pics/icon.ico"
-        self.root.current = "main_menu"
-        Clock.schedule_once(self.force_redraw, 0.1)  # Eventuell eine leichte Verzögerung hinzufügen
-        self.game_screen = self.root.get_screen("game")
-        self.load_pictures()
-
-    def start_new_game(self, cards_count, game_mode="standard", difficulty="easy"):
-        print(f"MyMemoryApp start new game {game_mode} {difficulty}")
-        self.game_screen.current_game_mode = game_mode
-        self.current_difficulty = difficulty
-        self.game_screen.current_difficulty = self.current_difficulty
-        self.game_screen.cards = cards_count
-
-        self.load_active_pics_lists()
-        self.game_screen.restart_game()
-        self.root.current = "game"
-
-        if game_mode == "standard":
-            pass
-
-        elif game_mode == "time_race":
-            pass
-
-        elif game_mode == "battle":
-            pass
-
-    def continue_game(self):
-        settings = load_settings()
-        game_screen = self.root.get_screen("game")
-        game_screen.active_touches.clear()
-        game_screen.touch_delay = settings["touch_delay"]
-        self.root.current = "game"
-
-    def force_redraw(self, dt):
-        # Erzwinge ein erneutes Rendern des aktuellen Screens
-        self.title = "MeinMemory"
-        Window.size = (Window.size[0] + 1, Window.size[1] + 1)
-        Window.size = (Window.size[0] - 1, Window.size[1] - 1)
-
-    def load_active_pics_lists(self):
-        self.pics_list.clear()
-        lists_selected = 0
-        all_pics_lists = load_pics_lists()
-        if all_pics_lists["akira_images"] == "down":
-            self.pics_list.extend(self.akira_images)
-            lists_selected += 1
-        if all_pics_lists["car_images"] == "down":
-            self.pics_list.extend(self.car_images)
-            lists_selected += 1
-        if all_pics_lists["bundesliga_images"] == "down":
-            self.pics_list.extend(self.bundesliga_images)
-            lists_selected += 1
-        if all_pics_lists["own_landscape_images"] == "down":
-            self.pics_list.extend(self.own_landscape_images)
-            lists_selected += 1
-        if all_pics_lists["sexy_images"] == "down":
-            self.pics_list.extend(self.sexy_images)
-            lists_selected += 1
-        if all_pics_lists["random_images"] == "down":
-            self.pics_list.extend(self.random_images)
-            lists_selected += 1
-
-        if lists_selected == 0:
-            reset_selected_pics_lists()
-            self.pics_list.clear()
-            self.pics_list.extend(self.akira_images)
-            self.pics_list.extend(self.car_images)
-            self.pics_list.extend(self.bundesliga_images)
-            self.pics_list.extend(self.own_landscape_images)
-            self.pics_list.extend(self.sexy_images)
-            self.pics_list.extend(self.random_images)
-
-    def load_pictures(self):
-        print("MyMemoryApp: load_pictures")
-        paths = {
-            "pics/Akira": self.akira_images,
-            "pics/Autos": self.car_images,
-            "pics/Bundesliga": self.bundesliga_images,
-            "pics/EigeneLandschaften": self.own_landscape_images,
-            "pics/Sexy": self.sexy_images,
-            "pics/Verschiedenes": self.random_images,
-        }
-
-        for path, image_list in paths.items():
-            for file_name in os.listdir(path):
-                if file_name.endswith(".png"):
-                    full_path = os.path.join(path, file_name)
-                    image_list.append(full_path)
-
-    def get_score_file_path(self):
-        return os.path.join(self.user_data_dir, "highscores.json")
-
-    def get_settings_file_path(self):
-        return os.path.join(self.user_data_dir, "settings.json")
-
-    def get_pics_lists_file_path(self):
-        return os.path.join(self.user_data_dir, "pics_lists.json")
-
-    def exit_app(self):
-        print("Es wird über 'MyMemoryApp' geschlossen.")
-        self.get_running_app().stop()
-        sys.exit()
-
-
 # region Functions #######################################################################################
 def start_app():
     print("start_app")
     MyMemoryApp().run()
+
+
+# noinspection PyPep8Naming
+def which_theme():
+    if platform == "android":
+        Configuration = autoclass("android.content.res.Configuration")
+        activity = autoclass("org.kivy.android.PythonActivity").mActivity
+        ui_mode = activity.getResources().getConfiguration().uiMode
+        dark = (ui_mode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        return dark
+    else:
+        return "not android"
 # endregion
+
+
+def get_theme_color(theme):
+    theme_color = "color"
+
+    if theme == "light":
+        theme_color = "light"
+    elif theme == "dark":
+        theme_color = "dark"
+    elif theme == "system":
+        is_dark = which_theme()
+        if is_dark is True:
+            theme_color = "dark"
+        elif is_dark is False:
+            theme_color = "light"
+        else:
+            theme_color = "color"
+    elif theme == "color":
+        theme_color = "color"
+
+    return theme_color
 
 
 if __name__ == '__main__':

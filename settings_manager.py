@@ -4,6 +4,7 @@ import json
 
 # Standardwerte für die Einstellungen
 default_settings = {
+    "theme": "color",
     "touch_delay": 10,
     "ai_timeout": 1.0,
     "hide_cards_timeout": 0.8
@@ -12,18 +13,27 @@ default_settings = {
 
 # Einstellungen-Datei speichern
 def save_settings(new_setting):
-    print("Einstellungen werden gespeichert.")
+    print(f"Einstellungen ({new_setting}) werden gespeichert.")
     app = App.get_running_app()
     settings_file_path = app.get_settings_file_path()
-    settings = load_settings()
     with open(settings_file_path, 'r+') as file:
-        if new_setting[0] in settings:
-            settings[new_setting[0]] = new_setting[1]
-            print(f"Einstellungen wurden geändert. {settings}")
-            json.dump(settings, file, indent=4)
-        else:
-            print(f"New_Setting ({new_setting}) wurde nicht erkannt.")
-
+        try:
+            settings = json.load(file)
+            if new_setting[0] in settings:
+                settings[new_setting[0]] = new_setting[1]
+                print(f"Einstellungen wurden geändert. {settings}")
+                file.seek(0)
+                json.dump(settings, file, indent=4)
+                file.truncate()
+            else:
+                print(f"New_Setting ({new_setting}) wurde nicht erkannt.")
+        except json.JSONDecodeError:
+            print("Fehler beim Laden der Einstellungen. Datei wird zurückgesetzt.")
+            # Dateiinhalt zurücksetzen
+            file.seek(0)
+            json.dump(default_settings, file, indent=4)
+            file.truncate()
+            return default_settings
 
 # Einstellungen-Datei laden
 def load_settings():

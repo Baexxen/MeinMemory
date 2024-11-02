@@ -1,87 +1,87 @@
 # Hauptmenü
 <MainMenuScreen>:
     continue_button: continue_button
+    standard_button: standard_button
+    time_button: time_button
+    multiplayer_button: multiplayer_button
+    settings_button: settings_button
+    exit_button: exit_button
+    top_label: top_label
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
-        Label:
+        LabelBackgroundColor:
+            id: top_label
             text: "Hauptmenü"
-        Button:
+        ButtonBackgroundColor:
             text: "Spiel fortsetzen"
             background_normal: ""
-            background_color: app.light_blue
-            background_border: app.black
             disabled: True
             id: continue_button
             on_release:
                 app.continue_game()
 
-        Button:
+        ButtonBackgroundColor:
             text: "Standard-Modus"
-            background_normal: ""
-            background_color: app.light_blue
+            id: standard_button
             on_release:
                 app.root.current = "standard_mode"
 
-        Button:
+        ButtonBackgroundColor:
             text: "Zeit-Modus"
-            background_normal: ""
-            background_color: app.light_blue
+            id: time_button
             on_release:
                 app.root.current = "time_mode"
 
-        Button:
+        ButtonBackgroundColor:
             text: "Multiplayer"
-            background_normal: ""
-            background_color: app.light_blue
+            id: multiplayer_button
             on_release:
                 app.root.current = "multiplayer_mode"
 
-        Button:
+        ButtonBackgroundColor:
             text: "Einstellungen"
-            background_normal: ""
-            background_color: app.light_blue
+            id: settings_button
             on_release:
                 app.root.current = "settings"
 
-        Button:
+        ButtonBackgroundColor:
             text: "Beenden"
-            background_normal: ""
-            background_color: app.light_blue
+            id: exit_button
             on_release:
                 app.exit_app()
 
 # Standard-Modus
 <StandardModeScreen>:
+    small_button: small_button
+    medium_button: medium_button
+    large_button: large_button
+    back_button: back_button
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
-        Label:
+        LabelBackgroundColor:
             text: "Standard-Modus"
-        Button:
+        ButtonBackgroundColor:
             text: "Klein"
-            background_normal: ""
-            background_color: app.light_blue
+            id: small_button
             on_release:
                 app.start_new_game(16, "standard")
-        Button:
+        ButtonBackgroundColor:
             text: "Mittel"
-            background_normal: ""
-            background_color: app.light_blue
+            id:medium_button
             on_release:
                 app.start_new_game(36, "standard")
-        Button:
+        ButtonBackgroundColor:
             text: "Groß"
-            background_normal: ""
-            background_color: app.light_blue
+            id: large_button
             on_release:
                 app.start_new_game(64, "standard")
-        Button:
+        ButtonBackgroundColor:
             text: "Zurück"
-            background_normal: ""
-            background_color: app.light_blue
+            id: back_button
             on_release:
                 app.root.current = "main_menu"
 
@@ -91,18 +91,14 @@
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
-        Label:
+        LabelBackgroundColor:
             text: "Zeit-Modi"
-        Button:
+        ButtonBackgroundColor:
             text: "Zeitrennen"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "time_race"
-        Button:
+        ButtonBackgroundColor:
             text: "Zurück"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "main_menu"
 
@@ -112,30 +108,22 @@
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
-        Label:
+        LabelBackgroundColor:
             text: "Zeitrennen"
-        Button:
+        ButtonBackgroundColor:
             text: "Klein"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.start_new_game(16, "time_race")
-        Button:
+        ButtonBackgroundColor:
             text: "Mittel"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.start_new_game(36, "time_race")
-        Button:
+        ButtonBackgroundColor:
             text: "Groß"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.start_new_game(64, "time_race")
-        Button:
+        ButtonBackgroundColor:
             text: "Zurück"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "time_mode"
 
@@ -144,24 +132,18 @@
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
-        Label:
+        LabelBackgroundColor:
             text: "Multiplayer"
-        Button:
+        ButtonBackgroundColor:
             text: "Duell gegen Spieler"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "duell_mode"
-        Button:
+        ButtonBackgroundColor:
             text: "Kampf gegen AI"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "battle_mode"
-        Button:
+        ButtonBackgroundColor:
             text: "Zurück"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "main_menu"
 
@@ -170,30 +152,22 @@
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
-        Label:
+        LabelBackgroundColor:
             text: "Duell-Modus"
-        Button:
+        ButtonBackgroundColor:
             text: "Klein"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.start_new_game(16, "duell_standard")
-        Button:
+        ButtonBackgroundColor:
             text: "Mittel"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.start_new_game(36, "duell_standard")
-        Button:
+        ButtonBackgroundColor:
             text: "Groß"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.start_new_game(64, "duell_standard")
-        Button:
+        ButtonBackgroundColor:
             text: "Zurück"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "main_menu"
 
@@ -211,7 +185,7 @@
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
-        Label:
+        LabelBackgroundColor:
             text: "Kampf-Modus"
         ################ Schwierigkeitsgrad der KI ######################################
         BoxLayout:
@@ -219,35 +193,23 @@
             padding: (5, 5, 5, 5)
             spacing: 5
             rows: 1
-            Button:
+            ButtonBackgroundColor:
                 text: "Leicht"
-                background_normal: ""
-                background_color: app.light_blue
-                disabled_color: app.beige
                 id: easy_button
                 on_release:
                     root.update_diff_buttons(1)
-            Button:
+            ButtonBackgroundColor:
                 text: "Mittel"
-                background_normal: ""
-                background_color: app.light_blue
-                disabled_color: app.beige
                 id: medium_button
                 on_release:
                     root.update_diff_buttons(2)
-            Button:
+            ButtonBackgroundColor:
                 text: "Schwer"
-                background_normal: ""
-                background_color: app.light_blue
-                disabled_color: app.beige
                 id: hard_button
                 on_release:
                     root.update_diff_buttons(3)
-            Button:
+            ButtonBackgroundColor:
                 text: "Unmöglich"
-                background_normal: ""
-                background_color: app.light_blue
-                disabled_color: app.beige
                 id: impossible_button
                 on_release:
                     root.update_diff_buttons(4)
@@ -256,27 +218,18 @@
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
             spacing: 5
-            Button:
+            ButtonBackgroundColor:
                 text: "Klein (4*4)"
-                background_normal: ""
-                background_color: app.light_blue
-                disabled_color: app.beige
                 id: small
                 on_release:
                     root.update_board_size_buttons(1)
-            Button:
+            ButtonBackgroundColor:
                 text: "Mittel (6*6)"
-                background_normal: ""
-                background_color: app.light_blue
-                disabled_color: app.beige
                 id: medium
                 on_release:
                     root.update_board_size_buttons(2)
-            Button:
+            ButtonBackgroundColor:
                 text: "Groß (8*8)"
-                background_normal: ""
-                background_color: app.light_blue
-                disabled_color: app.beige
                 id: big
                 on_release:
                     root.update_board_size_buttons(3)
@@ -285,22 +238,23 @@
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
             spacing: 5
-            Button:
+            ButtonBackgroundColor:
                 text: "Zurück"
-                background_normal: ""
-                background_color: app.light_blue
                 on_release:
                     app.root.current = "main_menu"
-            Button:
+            ButtonBackgroundColor:
                 text: "Spiel starten"
-                background_normal: ""
-                background_color: app.light_blue
                 on_release:
                     root.init_new_game("battle")
 
 # Einstellungen
 <SettingsScreen>:
     top_label: top_label
+    theme_label: theme_label
+    light_theme_button: light_theme_button
+    dark_theme_button: dark_theme_button
+    system_theme_button: system_theme_button
+    color_theme_button: color_theme_button
     touch_delay_label: touch_delay_label
     ai_timeout_label: ai_timeout_label
     hide_cards_timeout_label: hide_cards_timeout_label
@@ -311,12 +265,42 @@
         LabelBackgroundColor:
             id: top_label
             text: "Einstellungen"
-        Button:
+        ButtonBackgroundColor:
             text: "Bilder wählen"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "pics_select"
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 5
+            LabelBackgroundColor:
+                text: "Theme"
+                id: theme_label
+                size_hint: 0.2, 1
+            ButtonBackgroundColor:
+                text: "Light"
+                id: light_theme_button
+                size_hint: 0.2, 1
+                on_release:
+                    root.update_theme_buttons(0)
+            ButtonBackgroundColor:
+                text: "Dark"
+                id: dark_theme_button
+                size_hint: 0.2, 1
+                on_release:
+                    root.update_theme_buttons(1)
+            ButtonBackgroundColor:
+                text: "System"
+                id: system_theme_button
+                size_hint: 0.2, 1
+                on_release:
+                    root.update_theme_buttons(2)
+            ButtonBackgroundColor:
+                text: "Color"
+                id: color_theme_button
+                size_hint: 0.2, 1
+                on_release:
+                    root.update_theme_buttons(3)
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
@@ -325,18 +309,14 @@
                 text: "Touch-Delay: 10 (Standard = 10)"
                 id: touch_delay_label
                 size_hint: 0.8, 1
-            Button:
+            ButtonBackgroundColor:
                 text: "+"
-                background_normal: ""
-                background_color: app.light_blue
                 size_hint: 0.1, 1
                 on_release:
                     root.increase_touch_delay()
                     root.change_touch_delay_label_text()
-            Button:
+            ButtonBackgroundColor:
                 text: "-"
-                background_normal: ""
-                background_color: app.light_blue
                 size_hint: 0.1, 1
                 on_release:
                     root.decrease_touch_delay()
@@ -349,18 +329,14 @@
                 text: "AI Timeout: 1.0 (Standard = 1.0)"
                 id: ai_timeout_label
                 size_hint: 0.8, 1
-            Button:
+            ButtonBackgroundColor:
                 text: "+"
-                background_normal: ""
-                background_color: app.light_blue
                 size_hint: 0.1, 1
                 on_release:
                     root.increase_ai_timeout()
                     root.change_ai_timeout_label_text()
-            Button:
+            ButtonBackgroundColor:
                 text: "-"
-                background_normal: ""
-                background_color: app.light_blue
                 size_hint: 0.1, 1
                 on_release:
                     root.decrease_ai_timeout()
@@ -373,26 +349,20 @@
                 text: "Karten verdecken: 0.8 (Standard = 0.8)"
                 id: hide_cards_timeout_label
                 size_hint: 0.8, 1
-            Button:
+            ButtonBackgroundColor:
                 text: "+"
-                background_normal: ""
-                background_color: app.light_blue
                 size_hint: 0.1, 1
                 on_release:
                     root.increase_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
-            Button:
+            ButtonBackgroundColor:
                 text: "-"
-                background_normal: ""
-                background_color: app.light_blue
                 size_hint: 0.1, 1
                 on_release:
                     root.decrease_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
-        Button:
+        ButtonBackgroundColor:
             text: "Zurück"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "main_menu"
 
@@ -415,7 +385,7 @@
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 1
-        Label:
+        LabelBackgroundColor:
             text: "Auswahl der Bilder"
         BoxLayout:
             orientation: "horizontal"
@@ -514,10 +484,8 @@
                 background_checkbox_down: "gfx/misc/checkbox_checked.png"
                 on_release:
                     root.save_pics_lists()
-        Button:
+        ButtonBackgroundColor:
             text: "Zurück"
-            background_normal: ""
-            background_color: app.light_blue
             on_release:
                 app.root.current = "settings"
 # Eigentliches Spiel
@@ -566,22 +534,16 @@
                 size_hint: 1, 1
                 padding: (5, 5, 5, 5)
                 spacing: 5
-                Button:
+                ButtonBackgroundColor:
                     text: "Menü"
-                    background_normal: ""
-                    background_color: app.orange
                     size_hint: 0.25, 1
                     on_press: app.root.current = "main_menu"
-                Button:
+                ButtonBackgroundColor:
                     text: "Neustart"
-                    background_normal: ""
-                    background_color: app.orange
                     size_hint: 0.25, 1
                     on_press: root.restart_game()
-                Button:
+                ButtonBackgroundColor:
                     text: "Beenden"
-                    background_normal: ""
-                    background_color: app.orange
                     size_hint: 0.25, 1
                     on_press: app.exit_app()
                 LabelBackgroundColor:

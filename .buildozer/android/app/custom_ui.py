@@ -13,6 +13,7 @@ BEIGE = (1, 0.77, 0.59, 1)
 DARK_RED = (0.53, 0.09, 0.09, 1)
 ORANGE = (0.95, 0.7, 0.21, 1)
 LIGHT_BLUE = (0.08, 0.54, 0.64, 1)
+DARK_BLUE = (0.04, 0.27, 0.32, 1)
 
 
 class MyScatter(ScatterPlane):
