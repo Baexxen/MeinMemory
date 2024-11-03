@@ -593,8 +593,8 @@ class GameScreen(Screen):
         self.first_flip = True
         self.elapsed_time = 0
         self.time_race_running = False
-        self.bottom_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 5)
-        self.top_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 5)
+        self.bottom_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 3)
+        self.top_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 3)
         self.app = App.get_running_app()
         self.bottom_label.text = "Schimmel"
         self.current_highscore = 0
@@ -916,13 +916,11 @@ class MainMenuScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
         self.theme = "color"
         self.theme_color = "color"
         self.button_list = [self.continue_button, self.standard_button, self.time_button, self.multiplayer_button, self.settings_button, self.exit_button]
+        self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -935,12 +933,19 @@ class MainMenuScreen(Screen):
             self.continue_button.disabled = True
         self.continue_button.redraw()
 
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
     def on_pre_enter(self, *args):
         app = App.get_running_app()
+        self.theme_color = app.theme_color
         app_root = app.root
         if app_root:
             game_screen = app_root.get_screen("game")
             self.update_continue_button(game_screen.game_running)
+        self.redraw()
 
 
 class StandardModeScreen(Screen):
@@ -949,14 +954,23 @@ class StandardModeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class TimeModeScreen(Screen):
@@ -965,14 +979,23 @@ class TimeModeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class TimeRaceScreen(Screen):
@@ -981,14 +1004,23 @@ class TimeRaceScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class MultiplayerScreen(Screen):
@@ -997,14 +1029,23 @@ class MultiplayerScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class DuellModeScreen(Screen):
@@ -1013,14 +1054,23 @@ class DuellModeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class BattleModeScreen(Screen):
@@ -1041,9 +1091,7 @@ class BattleModeScreen(Screen):
         self.small.disabled = True
         self.current_board_size = 16
         self.button_list = [self.easy_button, self.medium_button, self.hard_button, self.impossible_button, self.small, self.medium, self.big]
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
         self.theme = "color"
         self.theme_color = "color"
@@ -1051,6 +1099,11 @@ class BattleModeScreen(Screen):
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def init_new_game(self, mode):
         app = App.get_running_app()
@@ -1140,10 +1193,7 @@ class SettingsScreen(Screen):
         self.ai_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.hide_cards_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.button_list = [self.light_theme_button, self.dark_theme_button, self.system_theme_button, self.color_theme_button]
-
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def on_pre_enter(self):
@@ -1156,6 +1206,11 @@ class SettingsScreen(Screen):
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def load_settings(self):
         settings = load_settings()
@@ -1318,14 +1373,18 @@ class PicsSelectScreen(Screen):
         self.sexy_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.random_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def save_pics_lists(self):
         save_pics_lists("akira_images", self.akira_box.state)
@@ -1346,6 +1405,9 @@ class PicsSelectScreen(Screen):
 
     def on_pre_enter(self, *args):
         self.load_checkbox_statuses()
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 # endregion
 
 

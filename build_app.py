@@ -71,7 +71,7 @@ dropbox_package_name = "C:/Program Files/WindowsApps/"
 stop_command = 'Stop-Process -Name Dropbox'
 
 # PowerShell-Befehl zum Starten von Dropbox über explorer.exe
-start_command = 'Start-Process "C:/Program Files/WindowsApps/DropboxInc.Dropbox_209.4.3661.0_x64__xbfy0k16fey96/Dropbox.exe"'
+start_command = 'Start-Process "C:\Program Files\WindowsApps\DropboxInc.Dropbox_211.4.6008.0_x64__xbfy0k16fey96\Dropbox.exe"'
 
 # PowerShell über subprocess steuern
 print("Dropbox wird beendet...")
