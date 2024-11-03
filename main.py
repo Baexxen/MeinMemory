@@ -606,7 +606,7 @@ class GameScreen(Screen):
         self.input_enabled = True
         self.cols = 4
         self.cards = 16
-        self.board_size = {16: "small", 36: "medium", 64: "big"}[self.cards]
+        self.board_size = {16: "small", 24: "medium", 36: "big"}[self.cards]
         self.ai_timeout = 1.0  # Verzögerung der AI-Aktionen (Karten aufdecken)
         self.hide_cards_timeout = 0.8  # Verzögerung beim Zudecken falsch aufgedeckter Karten
         self.touch_delay = 10  # Verzögerung bei Erkennung von 'Touch-Move'
@@ -614,7 +614,7 @@ class GameScreen(Screen):
         self.load_settings()
 
     def restart_game(self):
-        self.board_size = {16: "small", 36: "medium", 64: "big"}[self.cards]
+        self.board_size = {16: "small", 24: "medium", 36: "big"}[self.cards]
         self.cols = int(sqrt(self.cards))
 
         if self.current_game_mode == "standard":
@@ -1146,13 +1146,13 @@ class BattleModeScreen(Screen):
         elif pushed_button == 2:
             self.small.disabled = False
             self.medium.disabled = True
-            self.current_board_size = 36
+            self.current_board_size = 24
             self.big.disabled = False
         elif pushed_button == 3:
             self.small.disabled = False
             self.medium.disabled = False
             self.big.disabled = True
-            self.current_board_size = 64
+            self.current_board_size = 36
         for button in self.button_list:
             button.redraw()
 
