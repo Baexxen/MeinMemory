@@ -77,9 +77,9 @@ start_command = 'Start-Process "C:\Program Files\WindowsApps\DropboxInc.Dropbox_
 print("Dropbox wird beendet...")
 subprocess.run(["powershell.exe", "-Command", stop_command])
 
-print("Warte...")
-time.sleep(2)
+# print("Warte...")
+# time.sleep(2)
 
-print("Dropbox wird gestartet...")
-subprocess.run(["powershell.exe", "-Command", start_command])
-print("Dropbox sollte wieder laufen und die neue APK hochladen")
+print("Dropbox muss manuell gestartet werden >:(")
+# subprocess.run(["powershell.exe", "-Command", start_command])
+# print("Dropbox sollte wieder laufen und die neue APK hochladen")

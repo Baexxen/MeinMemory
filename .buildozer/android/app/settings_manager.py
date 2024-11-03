@@ -35,6 +35,7 @@ def save_settings(new_setting):
             file.truncate()
             return default_settings
 
+
 # Einstellungen-Datei laden
 def load_settings():
     print("Einstellungen werden geladen.")

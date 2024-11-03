@@ -71,15 +71,15 @@ dropbox_package_name = "C:/Program Files/WindowsApps/"
 stop_command = 'Stop-Process -Name Dropbox'
 
 # PowerShell-Befehl zum Starten von Dropbox über explorer.exe
-start_command = 'Start-Process "C:/Program Files/WindowsApps/DropboxInc.Dropbox_209.4.3661.0_x64__xbfy0k16fey96/Dropbox.exe"'
+start_command = 'Start-Process "C:\Program Files\WindowsApps\DropboxInc.Dropbox_211.4.6008.0_x64__xbfy0k16fey96\Dropbox.exe"'
 
 # PowerShell über subprocess steuern
 print("Dropbox wird beendet...")
 subprocess.run(["powershell.exe", "-Command", stop_command])
 
-print("Warte...")
-time.sleep(2)
+# print("Warte...")
+# time.sleep(2)
 
-print("Dropbox wird gestartet...")
-subprocess.run(["powershell.exe", "-Command", start_command])
-print("Dropbox sollte wieder laufen und die neue APK hochladen")
+print("Dropbox muss manuell gestartet werden >:(")
+# subprocess.run(["powershell.exe", "-Command", start_command])
+# print("Dropbox sollte wieder laufen und die neue APK hochladen")

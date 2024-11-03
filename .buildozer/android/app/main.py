@@ -61,7 +61,11 @@ CARD_COVER_THEME = {
     "dark": "pics/Default_dark.png",
     "color": "pics/Default.png"
 }
-
+BOARD_SIZES = {
+    "small": 16,
+    "medium": 24,
+    "big": 32
+}
 Window.clearcolor = LIGHT_BLUE
 if platform == "linux":
     Window.size = (600, 800)
@@ -71,7 +75,6 @@ if platform == "linux":
 
 # noinspection PyUnusedLocal
 class MyMemoryApp(App):
-    print("MyMemoryApp")
     white = ListProperty([1, 1, 1, 1])
     black = ListProperty([0, 0, 0, 1])
     beige = ListProperty([1, 0.77, 0.59, 1])
@@ -97,7 +100,6 @@ class MyMemoryApp(App):
         self.label_list = []
 
     def build(self):
-        print("MyMemoryApp build")
         # Transitions: NoTransition, FadeTransition, SwapTransition, WipeTransition, CardTransition, SlideTransition, ShaderTransition, RiseInTransition, FallOutTransition, TransitionBase
         sm = ScreenManager(transition=NoTransition())  # Disable transition
         sm.add_widget(GameScreen(name="game"))
@@ -116,7 +118,6 @@ class MyMemoryApp(App):
 
     def on_start(self):
         logging.debug("App started")
-        print("MyMemoryApp on_start")
         self.icon = "pics/icon.ico"
         self.root.current = "main_menu"
         Clock.schedule_once(self.force_redraw, 0.1)  # Eventuell eine leichte Verzögerung hinzufügen
@@ -124,12 +125,13 @@ class MyMemoryApp(App):
         self.load_pictures()
         Clock.schedule_once(self.load_settings, .2)
 
-    def start_new_game(self, cards_count, game_mode="standard", difficulty="easy"):
+    def start_new_game(self, board_size="small", game_mode="standard", difficulty="easy"):
         print(f"MyMemoryApp start new game {game_mode} {difficulty}")
         self.game_screen.current_game_mode = game_mode
         self.current_difficulty = difficulty
         self.game_screen.current_difficulty = self.current_difficulty
-        self.game_screen.cards = cards_count
+        self.game_screen.cards = BOARD_SIZES[board_size]
+        self.game_screen.board_size = board_size
 
         self.load_active_pics_lists()
         self.game_screen.restart_game()
@@ -208,7 +210,6 @@ class MyMemoryApp(App):
             self.pics_list.extend(self.random_images)
 
     def load_pictures(self):
-        print("MyMemoryApp: load_pictures")
         paths = {
             "pics/Akira": self.akira_images,
             "pics/Autos": self.car_images,
@@ -234,13 +235,11 @@ class MyMemoryApp(App):
         return os.path.join(self.user_data_dir, "pics_lists.json")
 
     def exit_app(self):
-        print("Es wird über 'MyMemoryApp' geschlossen.")
         self.get_running_app().stop()
         sys.exit()
 
 
 class Player:
-    print("Player")
 
     def __init__(self, name):
         self.name = name
@@ -259,7 +258,6 @@ class Player:
 
 
 class AI(Player):
-    print("KI")
 
     def __init__(self, name, difficulty="easy"):
         super().__init__(name)
@@ -486,8 +484,6 @@ class AI(Player):
 
     def create_card_grid(self):
         card_grid = [self.game_screen.card_list[i:i + self.cols] for i in range(0, len(self.game_screen.card_list), self.cols)]
-        for row in card_grid:
-            print([card.value for card in row])
         return card_grid
 
     def reset(self):
@@ -506,25 +502,19 @@ class AI(Player):
 
 
 class Card(ButtonBehavior, Image):
-    card_size = NumericProperty(100)
-    print("Card")
 
     def __init__(self, value, **kwargs):
         super().__init__(**kwargs)
         self.value = value
-
         self.flipped = False
         self.background_normal = ""
-        self.bind(card_size=self.update_size)
         self.instance = self
         self.parent = None
         self.game_screen = None
         self.flip_count = 0
-
-    def update_size(self, instance, value):
-        self.instance = instance
-        self.size_hint = (None, None)
-        self.size = (value, value)
+        self.default_pic = "pics/Default.png"
+        self.keep_ratio = False
+        self.allow_stretch = True
 
     def on_touch_down(self, touch):
         return False
@@ -570,7 +560,6 @@ class Card(ButtonBehavior, Image):
 
 # region Screens #################################################################################################
 class GameScreen(Screen):
-    print("GameScreen")
     layout = ObjectProperty(None)
     memory_grid = ObjectProperty(None)
     scatter = ObjectProperty(None)
@@ -582,7 +571,6 @@ class GameScreen(Screen):
 
     def __init__(self, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
-        print("GameScreen init")
         self.size = Window.size
         self.player = Player("Spieler_1")
         self.player2 = Player("Spieler_2")
@@ -593,8 +581,8 @@ class GameScreen(Screen):
         self.first_flip = True
         self.elapsed_time = 0
         self.time_race_running = False
-        self.bottom_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 5)
-        self.top_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 5)
+        self.bottom_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 3)
+        self.top_label.redraw(LIGHT_BLUE, BEIGE, True, ORANGE, 3)
         self.app = App.get_running_app()
         self.bottom_label.text = "Schimmel"
         self.current_highscore = 0
@@ -606,7 +594,7 @@ class GameScreen(Screen):
         self.input_enabled = True
         self.cols = 4
         self.cards = 16
-        self.board_size = {16: "small", 36: "medium", 64: "big"}[self.cards]
+        self.board_size = "small"
         self.ai_timeout = 1.0  # Verzögerung der AI-Aktionen (Karten aufdecken)
         self.hide_cards_timeout = 0.8  # Verzögerung beim Zudecken falsch aufgedeckter Karten
         self.touch_delay = 10  # Verzögerung bei Erkennung von 'Touch-Move'
@@ -614,8 +602,6 @@ class GameScreen(Screen):
         self.load_settings()
 
     def restart_game(self):
-        self.board_size = {16: "small", 36: "medium", 64: "big"}[self.cards]
-        self.cols = int(sqrt(self.cards))
 
         if self.current_game_mode == "standard":
             self.change_top_label_text(f"Einzelspieler")
@@ -629,11 +615,11 @@ class GameScreen(Screen):
             self.change_top_label_text(f"Duell\nAktueller Spieler ist {self.current_player.name}")
 
         self.memory_grid.clear_widgets()
-        self.memory_grid.cols = self.cols
+        self.memory_grid.update_rect()
         card_values = list(range(1, (self.cards // 2 + 1))) * 2
         shuffle(self.app.pics_list)
         shuffle(card_values)
-        self.card_list.clear()
+        self.card_list = []
         for value in card_values:
             card = Card(value)
             self.memory_grid.add_widget(card)
@@ -655,7 +641,7 @@ class GameScreen(Screen):
         self.first_flip = True
         self.elapsed_time = 0
         self.stop_time_count_up()
-        self.update_card_pos_and_size(self.memory_grid)
+        self.update_card_pos_and_size()
         self.reset_widgets()
         if self.current_game_mode != "duell_standard":
             highscores = load_best_scores()
@@ -725,15 +711,47 @@ class GameScreen(Screen):
         elif self.current_game_mode == "time_race":
             pass
 
-    def update_card_pos_and_size(self, *args):
-        # Berechne die Kartengröße so, dass sie genau in das Grid passt
-        grid_width = self.width
-        grid_height = self.height * 0.8
-        card_size = min(grid_width // self.cols, grid_height // (self.cards // self.cols))
+    def update_card_pos_and_size(self):
 
-        for card in self.card_list:
+        # Bildschirmgröße und Seitenverhältnis berechnen
+        screen_width, screen_height = Window.size
+        aspect_ratio = screen_width / (screen_height * 0.8)
+        print(f"Seitenverhältnis: {aspect_ratio}")
+
+        # Anzahl der Karten und optimale Spalten/Reihen festlegen
+        total_cards = self.cards
+
+        # Berechne die Anzahl der Spalten und Reihen auf Basis des Seitenverhältnisses
+        if aspect_ratio > 1:  # Querformat
+            cols = int((total_cards * aspect_ratio) ** 0.5)
+            rows = total_cards // cols
+        else:  # Hochformat
+            rows = int((total_cards / aspect_ratio) ** 0.5)
+            cols = total_cards // rows
+
+        # Falls die Anzahl der Karten nicht genau passt, passe die Anzahl der Spalten oder Reihen an
+        if rows * cols < total_cards:
+            cols += 1
+
+        print(f"Optimale Spalten: {cols}, Reihen: {rows}")
+
+        # Verfügbaren Platz berechnen und Kartengröße bestimmen
+        self.memory_grid.cols = cols
+        grid_width = self.memory_grid.width
+        grid_height = self.memory_grid.height
+        card_width = grid_width / cols
+        card_height = grid_height / rows
+
+        for i, card in enumerate(self.card_list):
             card.size_hint = (None, None)
-            card.size = (card_size, card_size)
+            card.size = (card_width, card_height)
+
+            # Position der Karte im Grid berechnen
+            col = i % cols
+            row = i // cols
+            card.pos = (col * card_width, grid_height - (row + 1) * card_height)
+
+        print("Kartenpositionen und -größen aktualisiert.")
 
     def on_touch_down(self, touch):
         self.active_touches.add(touch.uid)
@@ -904,7 +922,6 @@ class GameScreen(Screen):
 
 
 class MainMenuScreen(Screen):
-    print("MainMenuScreen")
     continue_button = ObjectProperty(None)
     standard_button = ObjectProperty(None)
     time_button = ObjectProperty(None)
@@ -916,13 +933,11 @@ class MainMenuScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
         self.theme = "color"
         self.theme_color = "color"
         self.button_list = [self.continue_button, self.standard_button, self.time_button, self.multiplayer_button, self.settings_button, self.exit_button]
+        self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -935,96 +950,143 @@ class MainMenuScreen(Screen):
             self.continue_button.disabled = True
         self.continue_button.redraw()
 
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
     def on_pre_enter(self, *args):
         app = App.get_running_app()
+        self.theme_color = app.theme_color
         app_root = app.root
         if app_root:
             game_screen = app_root.get_screen("game")
             self.update_continue_button(game_screen.game_running)
+        self.redraw()
 
 
 class StandardModeScreen(Screen):
-    print("StandardModeScreen")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class TimeModeScreen(Screen):
-    print("TimeModeScreen")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class TimeRaceScreen(Screen):
-    print("TimeRaceScreen")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class MultiplayerScreen(Screen):
-    print("MultiplayerScreen")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 
 
 class DuellModeScreen(Screen):
-    print("DuellModeScreen")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
 
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_pre_enter(self, *args):
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
+
 
 class BattleModeScreen(Screen):
-    print("BattleModeScreen")
+
     easy_button = ObjectProperty(None)
     medium_button = ObjectProperty(None)
     hard_button = ObjectProperty(None)
@@ -1041,9 +1103,7 @@ class BattleModeScreen(Screen):
         self.small.disabled = True
         self.current_board_size = 16
         self.button_list = [self.easy_button, self.medium_button, self.hard_button, self.impossible_button, self.small, self.medium, self.big]
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
         self.theme = "color"
         self.theme_color = "color"
@@ -1051,6 +1111,11 @@ class BattleModeScreen(Screen):
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def init_new_game(self, mode):
         app = App.get_running_app()
@@ -1093,13 +1158,13 @@ class BattleModeScreen(Screen):
         elif pushed_button == 2:
             self.small.disabled = False
             self.medium.disabled = True
-            self.current_board_size = 36
+            self.current_board_size = 24
             self.big.disabled = False
         elif pushed_button == 3:
             self.small.disabled = False
             self.medium.disabled = False
             self.big.disabled = True
-            self.current_board_size = 64
+            self.current_board_size = 36
         for button in self.button_list:
             button.redraw()
 
@@ -1112,7 +1177,7 @@ class BattleModeScreen(Screen):
 
 
 class SettingsScreen(Screen):
-    print("SettingsScreen")
+
     top_label = ObjectProperty(None)
     theme_label = ObjectProperty(None)
     light_theme_button = ObjectProperty(None)
@@ -1140,10 +1205,7 @@ class SettingsScreen(Screen):
         self.ai_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.hide_cards_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.button_list = [self.light_theme_button, self.dark_theme_button, self.system_theme_button, self.color_theme_button]
-
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def on_pre_enter(self):
@@ -1156,6 +1218,11 @@ class SettingsScreen(Screen):
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def load_settings(self):
         settings = load_settings()
@@ -1294,7 +1361,7 @@ class SettingsScreen(Screen):
 
 
 class PicsSelectScreen(Screen):
-    print("PicsSelectScreen")
+
     akira_label = ObjectProperty()
     akira_box = ObjectProperty()
     cars_label = ObjectProperty()
@@ -1318,14 +1385,18 @@ class PicsSelectScreen(Screen):
         self.sexy_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.random_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
 
-        with self.canvas.before:
-            Color(rgba=ORANGE)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.theme_color = "color"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def save_pics_lists(self):
         save_pics_lists("akira_images", self.akira_box.state)
@@ -1346,12 +1417,14 @@ class PicsSelectScreen(Screen):
 
     def on_pre_enter(self, *args):
         self.load_checkbox_statuses()
+        app = App.get_running_app()
+        self.theme_color = app.theme_color
+        self.redraw()
 # endregion
 
 
 # region Functions #######################################################################################
 def start_app():
-    print("start_app")
     MyMemoryApp().run()
 
 

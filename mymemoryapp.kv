@@ -68,17 +68,17 @@
             text: "Klein"
             id: small_button
             on_release:
-                app.start_new_game(16, "standard")
+                app.start_new_game("small", "standard")
         ButtonBackgroundColor:
             text: "Mittel"
             id:medium_button
             on_release:
-                app.start_new_game(24, "standard")
+                app.start_new_game("medium", "standard")
         ButtonBackgroundColor:
             text: "Groß"
             id: large_button
             on_release:
-                app.start_new_game(36, "standard")
+                app.start_new_game("big", "standard")
         ButtonBackgroundColor:
             text: "Zurück"
             id: back_button
@@ -113,15 +113,15 @@
         ButtonBackgroundColor:
             text: "Klein"
             on_release:
-                app.start_new_game(16, "time_race")
+                app.start_new_game("small", "time_race")
         ButtonBackgroundColor:
             text: "Mittel"
             on_release:
-                app.start_new_game(24, "time_race")
+                app.start_new_game("medium", "time_race")
         ButtonBackgroundColor:
             text: "Groß"
             on_release:
-                app.start_new_game(36, "time_race")
+                app.start_new_game("big", "time_race")
         ButtonBackgroundColor:
             text: "Zurück"
             on_release:
@@ -157,15 +157,15 @@
         ButtonBackgroundColor:
             text: "Klein"
             on_release:
-                app.start_new_game(16, "duell_standard")
+                app.start_new_game("small", "duell_standard")
         ButtonBackgroundColor:
             text: "Mittel"
             on_release:
-                app.start_new_game(24, "duell_standard")
+                app.start_new_game("medium", "duell_standard")
         ButtonBackgroundColor:
             text: "Groß"
             on_release:
-                app.start_new_game(36, "duell_standard")
+                app.start_new_game("big", "duell_standard")
         ButtonBackgroundColor:
             text: "Zurück"
             on_release:
@@ -219,17 +219,17 @@
             padding: (5, 5, 5, 5)
             spacing: 5
             ButtonBackgroundColor:
-                text: "Klein (4*4)"
+                text: "Klein"
                 id: small
                 on_release:
                     root.update_board_size_buttons(1)
             ButtonBackgroundColor:
-                text: "Mittel (6*6)"
+                text: "Mittel"
                 id: medium
                 on_release:
                     root.update_board_size_buttons(2)
             ButtonBackgroundColor:
-                text: "Groß (8*8)"
+                text: "Groß"
                 id: big
                 on_release:
                     root.update_board_size_buttons(3)
@@ -488,6 +488,7 @@
             text: "Zurück"
             on_release:
                 app.root.current = "settings"
+
 # Eigentliches Spiel
 <GameScreen>:
     layout: layout

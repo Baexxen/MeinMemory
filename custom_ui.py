@@ -1,6 +1,8 @@
 # Angepasste Layouts und Ähnliches
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.scatter import ScatterPlane
 from kivy.uix.label import Label
 from kivy.uix.button import Button
@@ -88,7 +90,7 @@ class MyScatter(ScatterPlane):
         self.touch_delay = self.game_screen.touch_delay
 
 
-class MyMemoryGrid(GridLayout):
+class MyMemoryGrid(FloatLayout):
     print("MyMemoryGrid")
 
     def __init__(self, **kwargs):
@@ -98,11 +100,11 @@ class MyMemoryGrid(GridLayout):
         self.size[0] = Window.size[0]
         self.size[1] = Window.size[1] * 0.8
         self.start_size = self.size
-
         self.rect = Rectangle(size=self.size, pos=self.pos)
-        self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
+        self.size[0] = Window.size[0]
+        self.size[1] = Window.size[1] * 0.8
         self.rect.pos = self.pos
         self.rect.size = self.size
 
@@ -126,7 +128,7 @@ class LabelBackgroundColor(Label):
         self.border_color = border_color
         self.border_width = border_width
         self.bold = False
-        self.font_size = 20
+        # self.font_size = 16
         self.halign = "center"
         self.valign = "center"
         self.border_rect = Rectangle(size=self.size, pos=self.pos)
@@ -224,7 +226,7 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
         self.text_color = text_color
         self.text_disabled_color = BEIGE
         self.bold = False
-        self.font_size = 20
+        # self.font_size = 16
         self.halign = "center"
         self.valign = "center"
         Clock.schedule_once(self.add_to_button_list, .1)
