@@ -523,6 +523,10 @@ class Card(ButtonBehavior, Image):
         return super().on_touch_move(touch)
 
     def on_touch_up(self, touch):
+        if self.flipped:
+            super().on_touch_up(touch)
+            return False
+
         if not self.collide_point(*touch.pos):
             super().on_touch_up(touch)
             return False
@@ -600,6 +604,13 @@ class GameScreen(Screen):
         self.touch_delay = 10  # Verzögerung bei Erkennung von 'Touch-Move'
         self.theme_color = "color"
         self.load_settings()
+        self.card_size_max = None
+        self.card_size_base = None
+        self.card_zoom_factor = 10
+        self.zoom_event = None
+        self.shrink_event = None
+        self.zoom_step = 2  # Schrittweite für Zoom von Card
+        self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
 
     def restart_game(self):
 
@@ -620,6 +631,9 @@ class GameScreen(Screen):
         shuffle(self.app.pics_list)
         shuffle(card_values)
         self.card_list = []
+        self.card_size_max = None
+        self.card_size_base = None
+
         for value in card_values:
             card = Card(value)
             self.memory_grid.add_widget(card)
@@ -673,26 +687,33 @@ class GameScreen(Screen):
 
         if self.game_over:
             score = 0
+            highscore_valid = False
             if self.current_game_mode == "standard":
                 score = self.player.turns
+                if score > self.cards // 2:
+                    highscore_valid = True
             elif self.current_game_mode == "battle":
                 score = self.player.score
+                highscore_valid = True
             elif self.current_game_mode == "time_race":
                 score = self.elapsed_time
-            highscore = update_best_scores(self.current_game_mode, self.current_difficulty, self.board_size, score)
-            if highscore:
-                self.change_top_label_text("Neuer Highscore =)")
-                self.current_highscore = score
-            else:
-                if self.current_game_mode == "duell_standard":
-                    if self.player.score > self.player2.score:
-                        self.change_top_label_text("Spieler_1 hat gewonnen :-)")
-                    elif self.player.score == self.player2.score:
-                        self.change_top_label_text("Unentschieden :-O")
-                    else:
-                        self.change_top_label_text("Spieler_2 hat gewonnen :-)")
+                if score > 2:
+                    highscore_valid = True
+            if highscore_valid:
+                highscore = update_best_scores(self.current_game_mode, self.current_difficulty, self.board_size, score)
+                if highscore:
+                    self.change_top_label_text("Neuer Highscore =)")
+                    self.current_highscore = score
                 else:
-                    self.change_top_label_text("Keine neue Bestleistung... Vielleicht nächstes Mal ;-)")
+                    if self.current_game_mode == "duell_standard":
+                        if self.player.score > self.player2.score:
+                            self.change_top_label_text("Spieler_1 hat gewonnen :-)")
+                        elif self.player.score == self.player2.score:
+                            self.change_top_label_text("Unentschieden :-O")
+                        else:
+                            self.change_top_label_text("Spieler_2 hat gewonnen :-)")
+                    else:
+                        self.change_top_label_text("Keine neue Bestleistung... Vielleicht nächstes Mal ;-)")
             self.update_time_display()
 
             self.current_player = self.player
@@ -712,7 +733,7 @@ class GameScreen(Screen):
             pass
 
     def update_card_pos_and_size(self):
-
+        print("***********update_card_pos_and_size++++++++++++++")
         # Fenstergröße und Kartenanzahl ermitteln
         window_width, window_height = Window.size
         window_height = window_height * 0.8
@@ -732,7 +753,8 @@ class GameScreen(Screen):
         # Berechne die Kartengröße auf Basis der Spalten und Reihen
         card_width = window_width / cols
         card_height = window_height / rows
-
+        self.card_size_base = (card_width, card_height)
+        self.card_size_max = (card_width + self.card_zoom_factor, card_height + self.card_zoom_factor)
         # Weise jeder Karte die berechnete Größe und Position zu
         for i, card in enumerate(self.card_list):
             card.size_hint = (None, None)
@@ -754,6 +776,7 @@ class GameScreen(Screen):
 
     def flip_card(self, card):
         print("flip_card")
+        self.card_clicked(card)
         first_card = card
         first_card.flipped = True
         first_card.source = first_card.pic
@@ -909,6 +932,38 @@ class GameScreen(Screen):
         if self.current_game_mode == "time_race" and self.time_race_running:
             self.start_time_count_up()
         return super().on_pre_enter()
+
+    def card_clicked(self, zoom_card):
+        print("card_clicked: scheduling zoom")
+        if self.zoom_event:
+            Clock.unschedule(self.zoom_event)
+
+        # Startet das Zoom-Event
+        self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom_card(zoom_card), 0.01)
+
+    def zoom_card(self, zoom_card):
+        if zoom_card.size[0] < self.card_size_max[0]:
+            zoom_card.size = (zoom_card.size[0] + self.zoom_step, zoom_card.size[1] + self.zoom_step)
+            zoom_card.pos = (zoom_card.pos[0] - self.pos_step, zoom_card.pos[1] - self.pos_step)
+        else:
+            if self.zoom_event:
+                Clock.unschedule(self.zoom_event)
+                self.zoom_event = None
+            if self.shrink_event:
+                Clock.unschedule(self.shrink_event)
+
+            # Shrink-Event starten
+            self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink_card(zoom_card), 0.01)
+
+    def shrink_card(self, shrink_card):
+        if shrink_card.size[0] > self.card_size_base[0]:
+            shrink_card.size = (shrink_card.size[0] - self.zoom_step, shrink_card.size[1] - self.zoom_step)
+            shrink_card.pos = (shrink_card.pos[0] + self.pos_step, shrink_card.pos[1] + self.pos_step)
+        else:
+            if self.shrink_event:
+                Clock.unschedule(self.shrink_event)
+                self.shrink_event = None
+            shrink_card.size = self.card_size_base
 
 
 class MainMenuScreen(Screen):

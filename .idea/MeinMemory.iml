@@ -185,6 +185,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/pics/Autos" />
       <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/pics/EigeneLandschaften" />
       <excludeFolder url="file://$MODULE_DIR$/.buildozer/android/app/pics/Verschiedenes" />
+      <excludeFolder url="file://$MODULE_DIR$/bin" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

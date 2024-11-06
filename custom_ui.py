@@ -63,7 +63,7 @@ class MyScatter(ScatterPlane):
         self.touch_delay = 10
 
         self.rect = Rectangle(size=self.size, pos=self.pos)
-        self.bind(pos=self.update_rect, size=self.update_rect)
+        # self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
