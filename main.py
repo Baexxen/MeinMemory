@@ -515,6 +515,7 @@ class Card(ButtonBehavior, Image):
         self.default_pic = "pics/Default.png"
         self.keep_ratio = False
         self.allow_stretch = True
+        self.fall_speed = 2.0
 
     def on_touch_down(self, touch):
         return False
@@ -603,6 +604,7 @@ class GameScreen(Screen):
         self.hide_cards_timeout = 0.8  # Verzögerung beim Zudecken falsch aufgedeckter Karten
         self.touch_delay = 10  # Verzögerung bei Erkennung von 'Touch-Move'
         self.theme_color = "color"
+        self.game_over_animation = "None"
         self.load_settings()
         self.card_size_max = None
         self.card_size_base = None
@@ -611,8 +613,12 @@ class GameScreen(Screen):
         self.shrink_event = None
         self.zoom_step = 2  # Schrittweite für Zoom von Card
         self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
+        self.game_over_animation_running = None
 
     def restart_game(self):
+        if self.game_over_animation_running:
+            Clock.unschedule(self.game_over_animation_running)
+            self.game_over_animation_running = None
 
         if self.current_game_mode == "standard":
             self.change_top_label_text(f"Einzelspieler")
@@ -633,6 +639,7 @@ class GameScreen(Screen):
         self.card_list = []
         self.card_size_max = None
         self.card_size_base = None
+        self.app.load_active_pics_lists()
 
         for value in card_values:
             card = Card(value)
@@ -704,6 +711,9 @@ class GameScreen(Screen):
                 if highscore:
                     self.change_top_label_text("Neuer Highscore =)")
                     self.current_highscore = score
+                    if self.game_over_animation == "FreeFall":
+                        self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
+
                 else:
                     if self.current_game_mode == "duell_standard":
                         if self.player.score > self.player2.score:
@@ -714,6 +724,8 @@ class GameScreen(Screen):
                             self.change_top_label_text("Spieler_2 hat gewonnen :-)")
                     else:
                         self.change_top_label_text("Keine neue Bestleistung... Vielleicht nächstes Mal ;-)")
+                    if self.game_over_animation == "FreeFall":
+                        self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
             self.update_time_display()
 
             self.current_player = self.player
@@ -911,6 +923,7 @@ class GameScreen(Screen):
 
     def load_settings(self):
         settings = load_settings()
+        self.game_over_animation = settings["game_over_animation"]
         self.touch_delay = settings["touch_delay"]
         self.ai_timeout = settings["ai_timeout"]
         self.hide_cards_timeout = settings["hide_cards_timeout"]
@@ -964,6 +977,18 @@ class GameScreen(Screen):
                 Clock.unschedule(self.shrink_event)
                 self.shrink_event = None
             shrink_card.size = self.card_size_base
+
+    def cards_falling(self):
+        cards_falling = 0
+        for card in self.card_list:
+            if card.pos[1] > - card.size[1] - (Window.size[1] * 0.1):
+                card.pos[1] -= card.fall_speed
+                card.fall_speed += 1
+                cards_falling += 1
+        if cards_falling == 0:
+            if self.game_over_animation_running:
+                Clock.unschedule(self.game_over_animation_running)
+                self.game_over_animation_running = None
 
 
 class MainMenuScreen(Screen):
@@ -1229,6 +1254,9 @@ class SettingsScreen(Screen):
     dark_theme_button = ObjectProperty(None)
     system_theme_button = ObjectProperty(None)
     color_theme_button = ObjectProperty(None)
+    game_over_animation_label = ObjectProperty(None)
+    no_game_over_animation_button = ObjectProperty(None)
+    free_fall_game_over_animation_button = ObjectProperty(None)
     touch_delay_label = ObjectProperty(None)
     ai_timeout_label = ObjectProperty(None)
     hide_cards_timeout_label = ObjectProperty(None)
@@ -1240,16 +1268,12 @@ class SettingsScreen(Screen):
         self.game_screen = None
         self.theme = "color"  # Eigentlicher 'Theme'-Name (Unterscheidung wegen 'System-Theme')
         self.theme_color = "color"  # Tatsächliche Theme-'Farbe'
+        self.game_over_animation = "None"
         self.touch_delay = 10
         self.ai_timeout = 1.0
         self.hide_cards_timeout = 0.8
         self.load_settings()
-        self.top_label.redraw(ORANGE, WHITE, False, WHITE, 5)
-        self.theme_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.touch_delay_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.ai_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.hide_cards_timeout_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.button_list = [self.light_theme_button, self.dark_theme_button, self.system_theme_button, self.color_theme_button]
+        # self.button_list = [self.light_theme_button, self.dark_theme_button, self.system_theme_button, self.color_theme_button]
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
@@ -1258,7 +1282,7 @@ class SettingsScreen(Screen):
         self.change_hide_cards_timeout_label_text()
         self.change_ai_timeout_label_text()
         self.change_touch_delay_label_text()
-        self.change_button_states(self.theme)
+        self.change_button_states(self.theme, self.game_over_animation)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -1278,38 +1302,44 @@ class SettingsScreen(Screen):
         else:
             self.app = App.get_running_app()
             self.app.change_theme_color(self.theme_color)
-
+        self.game_over_animation = settings["game_over_animation"]
         self.touch_delay = settings["touch_delay"]
         self.ai_timeout = settings["ai_timeout"]
         self.hide_cards_timeout = settings["hide_cards_timeout"]
 
-    def change_button_states(self, theme):
-        button = 0
+    def change_button_states(self, theme, game_over_animation):
+        theme_button = 0
         if theme == "light":
             self.light_theme_button.disabled = True
             self.dark_theme_button.disabled = False
             self.system_theme_button.disabled = False
             self.color_theme_button.disabled = False
-            button = 0
+            theme_button = 0
         elif theme == "dark":
             self.light_theme_button.disabled = False
             self.dark_theme_button.disabled = True
             self.system_theme_button.disabled = False
             self.color_theme_button.disabled = False
-            button = 1
+            theme_button = 1
         elif theme == "system":
             self.light_theme_button.disabled = False
             self.dark_theme_button.disabled = False
             self.system_theme_button.disabled = True
             self.color_theme_button.disabled = False
-            button = 2
+            theme_button = 2
         elif theme == "color":
             self.light_theme_button.disabled = False
             self.dark_theme_button.disabled = False
             self.system_theme_button.disabled = False
             self.color_theme_button.disabled = True
-            button = 3
-        self.update_theme_buttons(button)
+            theme_button = 3
+        self.update_theme_buttons(theme_button)
+        game_over_animation_button = 0
+        if game_over_animation == "None":
+            game_over_animation_button = 0
+        elif game_over_animation == "FreeFall":
+            game_over_animation_button = 1
+        self.update_game_over_animation_buttons(game_over_animation_button)
 
     def update_theme_buttons(self, button_id):
         if button_id == 0:
@@ -1356,6 +1386,26 @@ class SettingsScreen(Screen):
 
         new_setting = ("theme", self.theme)
         save_settings(new_setting)
+    
+    def update_game_over_animation_buttons(self, button_id):
+        if button_id == 0:
+            self.no_game_over_animation_button.disabled = True
+            self.free_fall_game_over_animation_button.disabled = False
+            self.game_over_animation = "None"
+            new_setting = ("game_over_animation", self.game_over_animation)
+            save_settings(new_setting)
+        elif button_id == 1:
+            self.no_game_over_animation_button.disabled = False
+            self.free_fall_game_over_animation_button.disabled = True
+            self.game_over_animation = "FreeFall"
+            new_setting = ("game_over_animation", self.game_over_animation)
+            save_settings(new_setting)
+
+        if self.app is not None:
+            self.app.change_theme_color(self.theme_color)
+        else:
+            self.app = App.get_running_app()
+            self.app.change_theme_color(self.theme_color)
 
     def change_touch_delay_label_text(self):
         self.touch_delay_label.text = f"Touch-Delay: {self.touch_delay} (Standard = 10)"
@@ -1444,12 +1494,37 @@ class PicsSelectScreen(Screen):
             self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def save_pics_lists(self):
-        save_pics_lists("akira_images", self.akira_box.state)
-        save_pics_lists("car_images", self.cars_box.state)
-        save_pics_lists("bundesliga_images", self.bundesliga_box.state)
-        save_pics_lists("own_landscape_images", self.own_landscapes_box.state)
-        save_pics_lists("sexy_images", self.sexy_box.state)
-        save_pics_lists("random_images", self.random_box.state)
+        pics_selected = 0
+        if self.akira_box.state == "down":
+            pics_selected += 1
+        if self.cars_box.state == "down":
+            pics_selected += 1
+        if self.bundesliga_box.state == "down":
+            pics_selected += 1
+        if self.own_landscapes_box.state == "down":
+            pics_selected += 1
+        if self.sexy_box.state == "down":
+            pics_selected += 1
+        if self.random_box.state == "down":
+            pics_selected += 1
+
+        if pics_selected > 0:
+            save_pics_lists("akira_images", self.akira_box.state)
+            save_pics_lists("car_images", self.cars_box.state)
+            save_pics_lists("bundesliga_images", self.bundesliga_box.state)
+            save_pics_lists("own_landscape_images", self.own_landscapes_box.state)
+            save_pics_lists("sexy_images", self.sexy_box.state)
+            save_pics_lists("random_images", self.random_box.state)
+        else:
+            self.akira_box.state = "down"
+            save_pics_lists("akira_images", self.akira_box.state)
+            save_pics_lists("car_images", self.cars_box.state)
+            save_pics_lists("bundesliga_images", self.bundesliga_box.state)
+            save_pics_lists("own_landscape_images", self.own_landscapes_box.state)
+            save_pics_lists("sexy_images", self.sexy_box.state)
+            save_pics_lists("random_images", self.random_box.state)
+
+            self.load_checkbox_statuses()
 
     def load_checkbox_statuses(self):
         checkboxes = load_pics_lists()

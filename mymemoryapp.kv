@@ -255,6 +255,9 @@
     dark_theme_button: dark_theme_button
     system_theme_button: system_theme_button
     color_theme_button: color_theme_button
+    game_over_animation_label: game_over_animation_label
+    no_game_over_animation_button: no_game_over_animation_button
+    free_fall_game_over_animation_button: free_fall_game_over_animation_button
     touch_delay_label: touch_delay_label
     ai_timeout_label: ai_timeout_label
     hide_cards_timeout_label: hide_cards_timeout_label
@@ -301,6 +304,26 @@
                 size_hint: 0.2, 1
                 on_release:
                     root.update_theme_buttons(3)
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 5
+            LabelBackgroundColor:
+                text: "Animation am Spielende: "
+                id: game_over_animation_label
+                size_hint: 0.6, 1
+            ButtonBackgroundColor:
+                text: "Keine Animation"
+                size_hint: 0.2, 1
+                id: no_game_over_animation_button
+                on_release:
+                    root.update_game_over_animation_buttons(0)
+            ButtonBackgroundColor:
+                text: "Freier Fall"
+                size_hint: 0.2, 1
+                id: free_fall_game_over_animation_button
+                on_release:
+                    root.update_game_over_animation_buttons(1)
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)

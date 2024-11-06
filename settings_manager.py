@@ -4,6 +4,7 @@ import json
 
 # Standardwerte für die Einstellungen
 default_settings = {
+    "game_over_animation": "None",
     "theme": "color",
     "touch_delay": 10,
     "ai_timeout": 1.0,
@@ -48,7 +49,7 @@ def load_settings():
                 settings = json.load(file)
                 # Überprüfen, ob alle Keys vorhanden sind
                 for key in settings:
-                    if key not in settings:
+                    if key not in default_settings:
                         print(f"{key} nicht gefunden, wird mit 'Default-Wert' ersetzt.")
                         settings[key] = default_settings[key]
 
