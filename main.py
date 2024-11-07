@@ -68,6 +68,9 @@ BOARD_SIZES = {
     "big": 30
 }
 Window.clearcolor = LIGHT_BLUE
+
+DEBUGGING = False
+
 if platform == "linux":
     Window.size = (600, 800)
     Window.left = 600
