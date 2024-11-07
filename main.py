@@ -12,6 +12,7 @@ from kivy.properties import ObjectProperty
 from kivy.properties import ListProperty
 from kivy.graphics import Color, Rectangle
 from kivy.utils import platform
+from kivy.metrics import sp
 from random import shuffle, randint
 from math import sqrt
 from jnius import autoclass
@@ -71,6 +72,10 @@ if platform == "linux":
     Window.size = (600, 800)
     Window.left = 600
     Window.top = 150
+    DEBUGGING = True
+
+FONT_SIZE_NORMAL = sp(Window.size[0] * 0.02)
+FONT_SIZE_LARGE = sp(Window.size[0] * 0.03)
 
 
 # noinspection PyUnusedLocal
@@ -82,6 +87,8 @@ class MyMemoryApp(App):
     orange = ListProperty([0.95, 0.7, 0.21, 1])
     light_blue = ListProperty([0.08, 0.54, 0.64, 1])
     dark_blue = ListProperty([0.04, 0.27, 0.32, 1])
+    normal_font = FONT_SIZE_NORMAL
+    large_font = FONT_SIZE_LARGE
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -573,6 +580,7 @@ class GameScreen(Screen):
     top_layout = ObjectProperty(None)
     scatter_layout = ObjectProperty(None)
     bottom_layout = ObjectProperty(None)
+    game_over_label = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
@@ -621,6 +629,7 @@ class GameScreen(Screen):
             self.game_over_animation_running = None
 
         if self.current_game_mode == "standard":
+            self.top_label.font_size = FONT_SIZE_LARGE
             self.change_top_label_text(f"Einzelspieler")
             self.current_difficulty = "easy"
         elif self.current_game_mode == "battle":
@@ -634,12 +643,12 @@ class GameScreen(Screen):
         self.memory_grid.clear_widgets()
         self.memory_grid.update_rect()
         card_values = list(range(1, (self.cards // 2 + 1))) * 2
-        shuffle(self.app.pics_list)
-        shuffle(card_values)
         self.card_list = []
         self.card_size_max = None
         self.card_size_base = None
         self.app.load_active_pics_lists()
+        shuffle(self.app.pics_list)
+        shuffle(card_values)
 
         for value in card_values:
             card = Card(value)
@@ -650,7 +659,10 @@ class GameScreen(Screen):
             card.pic = self.app.pics_list[value - 1]
             card.background_disabled_normal = card.pic
             card.background_down = card.pic
-            card.default_pic = CARD_COVER_THEME[self.theme_color]
+            if DEBUGGING:
+                card.default_pic = card.pic
+            else:
+                card.default_pic = CARD_COVER_THEME[self.theme_color]
             self.card_list.append(card)
 
         self.game_over = False
@@ -664,6 +676,9 @@ class GameScreen(Screen):
         self.stop_time_count_up()
         self.update_card_pos_and_size()
         self.reset_widgets()
+        self.game_over_label.hide = True
+        self.game_over_label.font_size = FONT_SIZE_LARGE
+
         if self.current_game_mode != "duell_standard":
             highscores = load_best_scores()
             current_game = f"{self.current_game_mode}_{self.current_difficulty}_{self.board_size}"
@@ -681,7 +696,10 @@ class GameScreen(Screen):
                 if card.flipped:
                     card.source = card.pic
                 else:
-                    card.source = card.default_pic
+                    if DEBUGGING:
+                        card.source = card.pic
+                    else:
+                        card.source = card.default_pic
             else:
                 card.source = card.pic
                 count_found_cards += 1
@@ -697,7 +715,7 @@ class GameScreen(Screen):
             highscore_valid = False
             if self.current_game_mode == "standard":
                 score = self.player.turns
-                if score > self.cards // 2:
+                if score >= self.cards // 2:
                     highscore_valid = True
             elif self.current_game_mode == "battle":
                 score = self.player.score
@@ -711,6 +729,8 @@ class GameScreen(Screen):
                 if highscore:
                     self.change_top_label_text("Neuer Highscore =)")
                     self.current_highscore = score
+
+                    self.game_over_label.text = f"Neuer Highscore =)\nPunkte: {score}"
                     if self.game_over_animation == "FreeFall":
                         self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
 
@@ -724,6 +744,8 @@ class GameScreen(Screen):
                             self.change_top_label_text("Spieler_2 hat gewonnen :-)")
                     else:
                         self.change_top_label_text("Keine neue Bestleistung... Vielleicht nächstes Mal ;-)")
+
+                        self.game_over_label.text = "Keine neue Bestleistung... Vielleicht nächstes Mal ;-)"
                     if self.game_over_animation == "FreeFall":
                         self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
             self.update_time_display()
@@ -731,7 +753,14 @@ class GameScreen(Screen):
             self.current_player = self.player
             Clock.unschedule(self.update_time)
             self.time_race_running = False
-            # self.game_over = False
+
+        if self.game_running:
+            self.game_over_label.hide = True
+            self.game_over_label.redraw()
+        else:
+            self.game_over_label.hide = False
+            self.game_over_label.opacity = 1
+            self.game_over_label.redraw()
 
         if self.current_game_mode == "standard":
             self.bottom_label.text = f"Runde: {self.player.turns}\nRekord: {self.current_highscore}"

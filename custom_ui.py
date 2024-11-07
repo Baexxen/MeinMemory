@@ -131,8 +131,12 @@ class LabelBackgroundColor(Label):
         # self.font_size = 16
         self.halign = "center"
         self.valign = "center"
+        self.hide = False
         self.border_rect = Rectangle(size=self.size, pos=self.pos)
         Clock.schedule_once(self.add_to_label_list, .1)
+        self.fading_out = False
+        self.fade_out_step = 0.02  # Schrittgröße, mit der die Undurchsichtigkeit reduziert wird
+        self.fade_out_delay = 0.1  # Delay, mit dem das 'Fade-Out' verzögert wird
 
         with self.canvas.before:
             # Rahmen zeichnen (optional)
@@ -164,34 +168,43 @@ class LabelBackgroundColor(Label):
         self.redraw()
 
     def redraw(self, back_color=None, text_color=None, border=None, border_color=None, border_width=None):
-        # Wenn Parameter angegeben sind, setze sie auf die neuen Werte
-        if back_color is not None:
-            self.back_color = back_color
-        if text_color is not None:
-            self.color = text_color
-        if border is not None:
-            self.border = border
-        if border_color is not None:
-            self.border_color = border_color
-        if border_width is not None:
-            self.border_width = border_width
-
-        # Bereinige den Canvas, bevor du neue Instruktionen hinzufügst
-        self.canvas.before.clear()
-
-        with self.canvas.before:
-            if self.border:
-                # Rahmen zeichnen
-                Color(rgba=self.border_color)
-                self.border_rect = Rectangle(size=self.size, pos=self.pos)
-
-                # Hintergrund zeichnen
-                Color(rgba=self.back_color)
-                self.rect = Rectangle(size=(self.size[0] - 2 * self.border_width, self.size[1] - 2 * self.border_width), pos=(self.x + self.border_width, self.y + self.border_width))
+        if not self.hide:  # Label soll nicht versteckt werden
+            if not self.blend_out:  # Label soll nicht langsam durchsichtig werden
+                self.opacity = 1  # Label ist komplett undurchsichtig
             else:
-                # Nur Hintergrund zeichnen
-                Color(rgba=self.back_color)
-                self.rect = Rectangle(size=self.size, pos=self.pos)
+                if not self.fading_out and self.opacity == 1:  # Label wird noch nicht durchsichtig gemacht und ist komplett undurchsichtig
+                    self.fading_out = Clock.schedule_interval(lambda dt: self.fade_out(), self.fade_out_delay)  # Label wird schrittweise durchsichtig
+
+            # Wenn Parameter angegeben sind, setze sie auf die neuen Werte
+            if back_color is not None:
+                self.back_color = back_color
+            if text_color is not None:
+                self.color = text_color
+            if border is not None:
+                self.border = border
+            if border_color is not None:
+                self.border_color = border_color
+            if border_width is not None:
+                self.border_width = border_width
+
+            # Bereinige den Canvas, bevor du neue Instruktionen hinzufügst
+            self.canvas.before.clear()
+
+            with self.canvas.before:
+                if self.border:
+                    # Rahmen zeichnen
+                    Color(rgba=self.border_color)
+                    self.border_rect = Rectangle(size=self.size, pos=self.pos)
+
+                    # Hintergrund zeichnen
+                    Color(rgba=self.back_color)
+                    self.rect = Rectangle(size=(self.size[0] - 2 * self.border_width, self.size[1] - 2 * self.border_width), pos=(self.x + self.border_width, self.y + self.border_width))
+                else:
+                    # Nur Hintergrund zeichnen
+                    Color(rgba=self.back_color)
+                    self.rect = Rectangle(size=self.size, pos=self.pos)
+        else:  # Label wird 'versteckt'/ ist komplett durchsichtig
+            self.opacity = 0
 
     def change_theme(self, theme):
         self.back_color = LABEL_THEMES[theme]["bg_color_normal"]
@@ -203,6 +216,16 @@ class LabelBackgroundColor(Label):
     def add_to_label_list(self, *args):
         app = App.get_running_app()
         app.label_list.append(self)
+
+    def fade_out(self):
+        if self.fading_out and self.opacity > 0:
+            self.opacity -= self.fade_out_step
+            if self.opacity < 0:
+                self.opacity = 0
+
+        if self.fading_out and self.opacity == 0:
+            Clock.unschedule(self.fading_out)
+            self.fading_out = False
 
 
 class ButtonBackgroundColor(ButtonBehavior, Label):

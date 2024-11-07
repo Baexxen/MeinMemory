@@ -14,6 +14,7 @@
         LabelBackgroundColor:
             id: top_label
             text: "Hauptmenü"
+            font_size: app.large_font
         ButtonBackgroundColor:
             text: "Spiel fortsetzen"
             background_normal: ""
@@ -63,6 +64,7 @@
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            font_size: app.large_font
             text: "Standard-Modus"
         ButtonBackgroundColor:
             text: "Klein"
@@ -92,6 +94,7 @@
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            font_size: app.large_font
             text: "Zeit-Modi"
         ButtonBackgroundColor:
             text: "Zeitrennen"
@@ -109,6 +112,7 @@
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            font_size: app.large_font
             text: "Zeitrennen"
         ButtonBackgroundColor:
             text: "Klein"
@@ -133,6 +137,7 @@
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            font_size: app.large_font
             text: "Multiplayer"
         ButtonBackgroundColor:
             text: "Duell gegen Spieler"
@@ -153,6 +158,7 @@
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            font_size: app.large_font
             text: "Duell-Modus"
         ButtonBackgroundColor:
             text: "Klein"
@@ -186,6 +192,7 @@
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            font_size: app.large_font
             text: "Kampf-Modus"
         ################ Schwierigkeitsgrad der KI ######################################
         BoxLayout:
@@ -267,6 +274,7 @@
         spacing: 5
         LabelBackgroundColor:
             id: top_label
+            font_size: app.large_font
             text: "Einstellungen"
         ButtonBackgroundColor:
             text: "Bilder wählen"
@@ -409,6 +417,7 @@
         padding: (5, 5, 5, 5)
         spacing: 1
         LabelBackgroundColor:
+            font_size: app.large_font
             text: "Auswahl der Bilder"
         BoxLayout:
             orientation: "horizontal"
@@ -522,6 +531,7 @@
     top_layout: top_layout
     scatter_layout: scatter_layout
     bottom_layout: bottom_layout
+    game_over_label: game_over_label
 
     FloatLayout:
         id: layout
@@ -545,6 +555,7 @@
             id: top_layout
             LabelBackgroundColor:
                 id: top_label
+                font_size: app.large_font
                 text: "Standard-Modus"
                 size_hint: 1, 1
 
@@ -574,3 +585,15 @@
                     id: bottom_label
                     text: "Nirs zu moche"
                     size_hint: 0.25, 1
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 0.2
+            pos_hint: {"x": 0, "top": 0.8}
+            LabelBackgroundColor:
+                id: game_over_label
+                text: "Schau mer mal"
+                size_hint: 1, 1
+                border: True
+                border_size: 3
+                hide: True
+                blend_out: True
