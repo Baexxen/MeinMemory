@@ -526,7 +526,7 @@ class Card(ButtonBehavior, Image):
         self.default_pic = "pics/Default.png"
         self.keep_ratio = False
         self.allow_stretch = True
-        self.fall_speed = 2.0
+        self.move_speed = 2.0
 
     def on_touch_down(self, touch):
         return False
@@ -626,6 +626,7 @@ class GameScreen(Screen):
         self.zoom_step = 2  # Schrittweite für Zoom von Card
         self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
         self.game_over_animation_running = None
+        self.hello_there_zoom_step = 0.1
 
     def restart_game(self):
         self.game_over_label.hide = True
@@ -739,9 +740,7 @@ class GameScreen(Screen):
                     self.game_over_label.hide = False
                     self.game_over_label.opacity = 1
                     self.game_over_label.redraw()
-                    if self.game_over_animation == "FreeFall":
-                        self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
-
+                    self.start_game_over_animation()
                 else:
                     if self.current_game_mode == "duell_standard":
                         if self.player.score > self.player2.score:
@@ -757,8 +756,7 @@ class GameScreen(Screen):
                         self.game_over_label.hide = False
                         self.game_over_label.opacity = 1
                         self.game_over_label.redraw()
-                    if self.game_over_animation == "FreeFall":
-                        self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
+                    self.start_game_over_animation()
             self.update_time_display()
 
             self.current_player = self.player
@@ -1018,17 +1016,46 @@ class GameScreen(Screen):
                 self.shrink_event = None
             shrink_card.size = self.card_size_base
 
-    def cards_falling(self):
+    def start_game_over_animation(self):
+        if self.game_over_animation == "FreeFall":
+            self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.free_fall(), 0.05)
+        elif self.game_over_animation == "ByeBye":
+            self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.bye_bye(), 0.05)
+        elif self.game_over_animation == "HelloThere":
+            self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.hello_there(), 0.05)
+
+    def free_fall(self):
         cards_falling = 0
         for card in self.card_list:
             if card.pos[1] > - card.size[1] - (Window.size[1] * 0.1):
-                card.pos[1] -= card.fall_speed
-                card.fall_speed += 1
+                card.pos[1] -= card.move_speed
+                card.move_speed += 1
                 cards_falling += 1
         if cards_falling == 0:
             if self.game_over_animation_running:
                 Clock.unschedule(self.game_over_animation_running)
                 self.game_over_animation_running = None
+
+    def bye_bye(self):
+        cards_moving = 0
+        for card in self.card_list:
+            if card.pos[0] > - card.size[0] - Window.size[0]:
+                card.pos[0] -= card.move_speed
+                card.move_speed += 1
+                cards_moving += 1
+        if cards_moving == 0:
+            if self.game_over_animation_running:
+                Clock.unschedule(self.game_over_animation_running)
+                self.game_over_animation_running = None
+
+    def hello_there(self):
+        if self.scatter.scale < self.scatter.scale_max:
+            self.scatter.scale += self.hello_there_zoom_step
+        if self.scatter.scale > self.scatter.scale_max:
+            self.scatter.scale = self.scatter.scale_max
+        if self.scatter.scale == self.scatter.scale_max:
+            Clock.unschedule(self.game_over_animation_running)
+            self.game_over_animation_running = None
 
 
 class MainMenuScreen(Screen):
@@ -1297,6 +1324,8 @@ class SettingsScreen(Screen):
     game_over_animation_label = ObjectProperty(None)
     no_game_over_animation_button = ObjectProperty(None)
     free_fall_game_over_animation_button = ObjectProperty(None)
+    bye_bye_game_over_animation_button = ObjectProperty(None)
+    hello_there_game_over_animation_button = ObjectProperty(None)
     touch_delay_label = ObjectProperty(None)
     ai_timeout_label = ObjectProperty(None)
     hide_cards_timeout_label = ObjectProperty(None)
@@ -1378,6 +1407,10 @@ class SettingsScreen(Screen):
             game_over_animation_button = 0
         elif game_over_animation == "FreeFall":
             game_over_animation_button = 1
+        elif game_over_animation == "ByeBye":
+            game_over_animation_button = 2
+        elif game_over_animation == "HelloThere":
+            game_over_animation_button = 3
         self.update_game_over_animation_buttons(game_over_animation_button)
 
     def update_theme_buttons(self, button_id):
@@ -1427,18 +1460,36 @@ class SettingsScreen(Screen):
         save_settings(new_setting)
     
     def update_game_over_animation_buttons(self, button_id):
+        new_setting = ("game_over_animation", "None")
         if button_id == 0:
             self.no_game_over_animation_button.disabled = True
             self.free_fall_game_over_animation_button.disabled = False
+            self.bye_bye_game_over_animation_button.disabled = False
+            self.hello_there_game_over_animation_button.disabled = False
             self.game_over_animation = "None"
             new_setting = ("game_over_animation", self.game_over_animation)
-            save_settings(new_setting)
         elif button_id == 1:
             self.no_game_over_animation_button.disabled = False
             self.free_fall_game_over_animation_button.disabled = True
+            self.bye_bye_game_over_animation_button.disabled = False
+            self.hello_there_game_over_animation_button.disabled = False
             self.game_over_animation = "FreeFall"
             new_setting = ("game_over_animation", self.game_over_animation)
-            save_settings(new_setting)
+        elif button_id == 2:
+            self.no_game_over_animation_button.disabled = False
+            self.free_fall_game_over_animation_button.disabled = False
+            self.bye_bye_game_over_animation_button.disabled = True
+            self.hello_there_game_over_animation_button.disabled = False
+            self.game_over_animation = "ByeBye"
+            new_setting = ("game_over_animation", self.game_over_animation)
+        elif button_id == 3:
+            self.no_game_over_animation_button.disabled = False
+            self.free_fall_game_over_animation_button.disabled = False
+            self.bye_bye_game_over_animation_button.disabled = False
+            self.hello_there_game_over_animation_button.disabled = True
+            self.game_over_animation = "HelloThere"
+            new_setting = ("game_over_animation", self.game_over_animation)
+        save_settings(new_setting)
 
         if self.app is not None:
             self.app.change_theme_color(self.theme_color)
