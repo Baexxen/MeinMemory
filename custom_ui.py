@@ -21,13 +21,14 @@ ORANGE = (0.95, 0.7, 0.21, 1)
 LIGHT_BLUE = (0.08, 0.54, 0.64, 1)
 DARK_BLUE = (0.04, 0.27, 0.32, 1)
 GREY = (0.48, 0.48, 0.48, 1)
+DARK_GREY = (0.35, 0.35, 0.35, 1)
 
 BUTTON_THEMES = {
-        "light": {"btn_bg_color_normal": WHITE, "btn_bg_color_dis": GREY, "btn_bg_dis_normal": GREY, "btn_bg_dis_down": GREY, "btn_txt_color": ORANGE, "btn_border_color": BEIGE, "btn_txt_dis_color": BEIGE,
+        "light": {"btn_bg_color_normal": WHITE, "btn_bg_color_dis": GREY, "btn_bg_dis_normal": GREY, "btn_bg_dis_down": GREY, "btn_txt_color": ORANGE, "btn_border_color": BEIGE, "btn_txt_dis_color": DARK_GREY,
                   "btn_bg_down": GREY},
-        "dark": {"btn_bg_color_normal": BLACK, "btn_bg_color_dis": GREY, "btn_bg_dis_normal": GREY, "btn_bg_dis_down": GREY, "btn_txt_color": BEIGE, "btn_border_color": BEIGE, "btn_txt_dis_color": BEIGE,
+        "dark": {"btn_bg_color_normal": BLACK, "btn_bg_color_dis": GREY, "btn_bg_dis_normal": GREY, "btn_bg_dis_down": GREY, "btn_txt_color": BEIGE, "btn_border_color": BEIGE, "btn_txt_dis_color": DARK_GREY,
                  "btn_bg_down": GREY},
-        "color": {"btn_bg_color_normal": LIGHT_BLUE, "btn_bg_color_dis": DARK_BLUE, "btn_bg_dis_normal": DARK_BLUE, "btn_bg_dis_down": DARK_BLUE, "btn_txt_color": BEIGE, "btn_border_color": BEIGE, "btn_txt_dis_color": BEIGE,
+        "color": {"btn_bg_color_normal": LIGHT_BLUE, "btn_bg_color_dis": GREY, "btn_bg_dis_normal": GREY, "btn_bg_dis_down": GREY, "btn_txt_color": BEIGE, "btn_border_color": BEIGE, "btn_txt_dis_color": DARK_GREY,
                   "btn_bg_down": DARK_BLUE}
     }
 
@@ -247,7 +248,7 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
         self.background_color_down = DARK_BLUE
         self.background_color_normal = LIGHT_BLUE
         self.text_color = text_color
-        self.text_disabled_color = BEIGE
+        self.text_disabled_color = GREY
         self.bold = False
         # self.font_size = 16
         self.halign = "center"
@@ -309,15 +310,19 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
                 # Hintergrund zeichnen
                 if self.disabled:
                     Color(rgba=self.background_color_disabled)
+                    self.color = self.text_disabled_color
                 else:
                     Color(rgba=self.back_color)
+                    self.color = self.text_color
                 self.rect = Rectangle(size=(self.size[0] - 2 * self.border_width, self.size[1] - 2 * self.border_width), pos=(self.x + self.border_width, self.y + self.border_width))
             else:
                 # Nur Hintergrund zeichnen
                 if self.disabled:
                     Color(rgba=self.background_color_disabled)
+                    self.color = self.text_disabled_color
                 else:
                     Color(rgba=self.back_color)
+                    self.color = self.text_color
                 self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def change_theme(self, theme):
@@ -332,6 +337,7 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
         self.background_disabled = ""
         self.background_disabled_down = ""
         self.background_color_down = BUTTON_THEMES[theme]["btn_bg_down"]
+        self.text_disabled_color = BUTTON_THEMES[theme]["btn_txt_dis_color"]
         self.redraw()
 
     def add_to_button_list(self, *args):

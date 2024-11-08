@@ -50,6 +50,7 @@ ORANGE = (0.95, 0.7, 0.21, 1)
 LIGHT_BLUE = (0.08, 0.54, 0.64, 1)
 DARK_BLUE = (0.04, 0.27, 0.32, 1)
 GREY = (0.48, 0.48, 0.48, 1)
+DARK_GREY = (0.35, 0.35, 0.35, 1)
 
 WINDOW_CLEARCOLOR_THEME = {
     "light": ORANGE,
@@ -75,7 +76,7 @@ if platform == "linux":
     Window.size = (600, 800)
     Window.left = 600
     Window.top = 150
-    DEBUGGING = True
+    DEBUGGING = False
 
 FONT_SIZE_NORMAL = sp(Window.size[0] * 0.02)
 FONT_SIZE_LARGE = sp(Window.size[0] * 0.03)
@@ -627,6 +628,7 @@ class GameScreen(Screen):
         self.game_over_animation_running = None
 
     def restart_game(self):
+        self.game_over_label.hide = True
         if self.game_over_animation_running:
             Clock.unschedule(self.game_over_animation_running)
             self.game_over_animation_running = None
@@ -734,6 +736,9 @@ class GameScreen(Screen):
                     self.current_highscore = score
 
                     self.game_over_label.text = f"Neuer Highscore =)\nPunkte: {score}"
+                    self.game_over_label.hide = False
+                    self.game_over_label.opacity = 1
+                    self.game_over_label.redraw()
                     if self.game_over_animation == "FreeFall":
                         self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
 
@@ -749,6 +754,9 @@ class GameScreen(Screen):
                         self.change_top_label_text("Keine neue Bestleistung... Vielleicht nächstes Mal ;-)")
 
                         self.game_over_label.text = "Keine neue Bestleistung... Vielleicht nächstes Mal ;-)"
+                        self.game_over_label.hide = False
+                        self.game_over_label.opacity = 1
+                        self.game_over_label.redraw()
                     if self.game_over_animation == "FreeFall":
                         self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.cards_falling(), 0.05)
             self.update_time_display()
@@ -757,13 +765,13 @@ class GameScreen(Screen):
             Clock.unschedule(self.update_time)
             self.time_race_running = False
 
-        if self.game_running:
-            self.game_over_label.hide = True
-            self.game_over_label.redraw()
-        else:
-            self.game_over_label.hide = False
-            self.game_over_label.opacity = 1
-            self.game_over_label.redraw()
+        # if self.game_running:
+        #    self.game_over_label.hide = True
+        #    self.game_over_label.redraw()
+        # else:
+        #    self.game_over_label.hide = False
+        #    self.game_over_label.opacity = 1
+        #    self.game_over_label.redraw()
 
         if self.current_game_mode == "standard":
             self.bottom_label.text = f"Runde: {self.player.turns}\nRekord: {self.current_highscore}"
@@ -1305,7 +1313,6 @@ class SettingsScreen(Screen):
         self.ai_timeout = 1.0
         self.hide_cards_timeout = 0.8
         self.load_settings()
-        # self.button_list = [self.light_theme_button, self.dark_theme_button, self.system_theme_button, self.color_theme_button]
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
@@ -1440,7 +1447,7 @@ class SettingsScreen(Screen):
             self.app.change_theme_color(self.theme_color)
 
     def change_touch_delay_label_text(self):
-        self.touch_delay_label.text = f"Touch-Delay: {self.touch_delay} (Standard = 10)"
+        self.touch_delay_label.text = f"Touch-Delay: {self.touch_delay} (Standard = 10)\nTrägheit der 'Touch-Erkennung'\nHöherer Wert verhindert eventuell versehentliches Verschieben des Spielfeldes"
 
     def increase_touch_delay(self):
         self.touch_delay += 1
@@ -1454,7 +1461,7 @@ class SettingsScreen(Screen):
             save_settings(new_setting)
 
     def change_ai_timeout_label_text(self):
-        self.ai_timeout_label.text = f"AI-Timeout: {self.ai_timeout} (Standard = 1.0)\n(Muss größer sein als 'Karten verdecken')"
+        self.ai_timeout_label.text = f"KI-Verzögerung: {self.ai_timeout} (Standard = 1.0)\n(Muss größer sein als 'Karten verdecken')\nDauer für Aktionen der KI"
 
     def increase_ai_timeout(self):
         self.ai_timeout += 0.1  # Verzögerung der AI-Aktionen (Aufdecken von Karten)
@@ -1511,7 +1518,7 @@ class PicsSelectScreen(Screen):
         self.own_landscapes_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.sexy_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.random_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-
+        self.checkbox_list = [self.akira_box, self.cars_box, self.bundesliga_box, self.own_landscapes_box, self.sexy_box, self.random_box]
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -1567,10 +1574,24 @@ class PicsSelectScreen(Screen):
         self.sexy_box.state = checkboxes["sexy_images"]
         self.random_box.state = checkboxes["random_images"]
 
+    def update_checkbox_theme(self):
+        for box in self.checkbox_list:
+            if self.theme_color == "color":
+                box.background_checkbox_normal = "gfx/misc/checkbox_unchecked_color.png"
+                box.background_checkbox_down = "gfx/misc/checkbox_checked_color.png"
+            elif self.theme_color == "light":
+                box.background_checkbox_normal = "gfx/misc/checkbox_unchecked_light.png"
+                box.background_checkbox_down = "gfx/misc/checkbox_checked_light.png"
+            elif self.theme_color == "dark":
+                box.background_checkbox_normal = "gfx/misc/checkbox_unchecked_dark.png"
+                box.background_checkbox_down = "gfx/misc/checkbox_checked_dark.png"
+
     def on_pre_enter(self, *args):
         self.load_checkbox_statuses()
-        app = App.get_running_app()
-        self.theme_color = app.theme_color
+        settings = load_settings()
+        theme = settings["theme"]
+        self.theme_color = get_theme_color(theme)
+        self.update_checkbox_theme()
         self.redraw()
 # endregion
 
