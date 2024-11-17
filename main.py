@@ -542,14 +542,14 @@ class Card(ButtonBehavior, Image):
         self.zoom_event = None
         self.shrink_event = None
         self.zoom_step = 2  # Schrittweite für Zoom von Card
-        self.flip_step = 6  # Schrittweite für Flip von Card
+        self.flip_step = 8  # Schrittweite für Flip von Card
         self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
-        self.clicked_animation = "zoom"
         self.starting_pos = (0, 0)
         self.pic = None
+        self.flip_animation = "flip"
 
     def clicked(self):
-        print(f"card_clicked: Animation: {self.clicked_animation}")
+        print(f"card_clicked: Animation: {self.flip_animation}")
         if self.zoom_event:
             Clock.unschedule(self.zoom_event)
             self.size = self.card_size_base
@@ -562,7 +562,7 @@ class Card(ButtonBehavior, Image):
         self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom(), 0.01)
 
     def zoom(self):
-        if self.clicked_animation == "zoom":
+        if self.flip_animation == "zoom":
             if self.size[0] < self.card_size_max[0]:
                 self.size = (self.size[0] + self.zoom_step, self.size[1] + self.zoom_step)
                 self.pos = (self.pos[0] - self.pos_step, self.pos[1] - self.pos_step)
@@ -576,17 +576,14 @@ class Card(ButtonBehavior, Image):
                 # Shrink-Event starten
                 if self.flipped:
                     self.source = self.pic
-                # self.source = self.pic if self.source == self.default_pic else self.default_pic
-                # self.flipped = True if not self.flipped else False
                 self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), 0.01)
-        elif self.clicked_animation == "flip":
+        elif self.flip_animation == "flip":
             if self.width > self.zoom_step:
                 self.width -= self.flip_step
                 self.pos[0] += self.flip_step // 2
             else:
                 self.width = 0
                 self.source = self.pic if self.source == self.default_pic else self.default_pic
-                # self.flipped = True if not self.flipped else False
                 if self.zoom_event:
                     Clock.unschedule(self.zoom_event)
                 if self.shrink_event:
@@ -594,7 +591,7 @@ class Card(ButtonBehavior, Image):
                 self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), 0.01)
 
     def shrink(self):
-        if self.clicked_animation == "zoom":
+        if self.flip_animation == "zoom":
             if self.size[0] > self.card_size_base[0]:
                 self.size = (self.size[0] - self.zoom_step, self.size[1] - self.zoom_step)
                 self.pos = (self.pos[0] + self.pos_step, self.pos[1] + self.pos_step)
@@ -605,7 +602,7 @@ class Card(ButtonBehavior, Image):
                 self.size = self.card_size_base
                 self.game_screen.update()
 
-        elif self.clicked_animation == "flip":
+        elif self.flip_animation == "flip":
             if self.width < self.card_size_base[0]:
                 self.width += self.flip_step
                 self.pos[0] -= self.flip_step // 2
@@ -710,7 +707,7 @@ class GameScreen(Screen):
         self.load_settings()
         self.card_size_max = None
         self.card_size_base = None
-        self.card_zoom_factor = 10
+        self.card_zoom_factor = 20
         self.zoom_event = None
         self.shrink_event = None
         self.zoom_step = 2  # Schrittweite für Zoom von Card
@@ -718,8 +715,10 @@ class GameScreen(Screen):
         self.game_over_animation_running = None
         self.hello_there_zoom_step = 0.1
         self.who_starts_screen = None
+        self.card_flip_animation = "flip"
 
     def restart_game(self):
+        self.load_settings()
         self.game_over_label.hide = True
         if self.game_over_animation_running:
             Clock.unschedule(self.game_over_animation_running)
@@ -757,6 +756,7 @@ class GameScreen(Screen):
             self.memory_grid.add_widget(card)
             card.parent = card.get_scatter_parent()
             card.game_screen = self
+            card.flip_animation = self.card_flip_animation
             card.source = self.app.pics_list[value - 1]
             card.pic = self.app.pics_list[value - 1]
             card.background_disabled_normal = card.pic
@@ -782,7 +782,7 @@ class GameScreen(Screen):
             current_game = f"{self.current_game_mode}_{self.current_difficulty}_{self.board_size}"
             self.current_highscore = highscores[current_game]
             self.update_time_display()
-        self.load_settings()
+
         self.player.reset()
         self.player2.reset()
         self.ai.reset()
@@ -804,7 +804,8 @@ class GameScreen(Screen):
                         if not card.shrink_event and not card.zoom_event:
                             card.source = card.default_pic
             else:
-                card.source = card.pic
+                if card.flipped and not card.shrink_event and not card.zoom_event:
+                    card.source = card.pic
                 count_found_cards += 1
             card.text = str(card.value)
 
@@ -1066,6 +1067,7 @@ class GameScreen(Screen):
     def load_settings(self):
         settings = load_settings()
         self.game_over_animation = settings["game_over_animation"]
+        self.card_flip_animation = settings["card_flip_animation"]
         self.touch_delay = settings["touch_delay"]
         self.ai_timeout = settings["ai_timeout"]
         self.hide_cards_timeout = settings["hide_cards_timeout"]
@@ -1083,6 +1085,8 @@ class GameScreen(Screen):
 
     def on_pre_enter(self, *args):
         self.load_settings()
+        for card in self.card_list:
+            card.flip_animation = self.card_flip_animation
         self.reset_widgets()
         if self.current_game_mode == "time_race" and self.time_race_running:
             self.start_time_count_up()
@@ -1411,6 +1415,9 @@ class SettingsScreen(Screen):
     touch_delay_label = ObjectProperty(None)
     ai_timeout_label = ObjectProperty(None)
     hide_cards_timeout_label = ObjectProperty(None)
+    card_flip_animation_label = ObjectProperty(None)
+    card_flip_animation_flip_button = ObjectProperty(None)
+    card_flip_animation_zoom_button = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1419,6 +1426,7 @@ class SettingsScreen(Screen):
         self.game_screen = None
         self.theme = "color"  # Eigentlicher 'Theme'-Name (Unterscheidung wegen 'System-Theme')
         self.theme_color = "color"  # Tatsächliche Theme-'Farbe'
+        self.card_flip_animation = "flip"
         self.game_over_animation = "None"
         self.touch_delay = 10
         self.ai_timeout = 1.0
@@ -1452,6 +1460,7 @@ class SettingsScreen(Screen):
         else:
             self.app = App.get_running_app()
             self.app.change_theme_color(self.theme_color)
+        self.card_flip_animation = settings["card_flip_animation"]
         self.game_over_animation = settings["game_over_animation"]
         self.touch_delay = settings["touch_delay"]
         self.ai_timeout = settings["ai_timeout"]
@@ -1494,6 +1503,12 @@ class SettingsScreen(Screen):
         elif game_over_animation == "HelloThere":
             game_over_animation_button = 3
         self.update_game_over_animation_buttons(game_over_animation_button)
+        card_flip_button = 0
+        if self.card_flip_animation == "flip":
+            card_flip_button = 0
+        elif self.card_flip_animation == "zoom":
+            card_flip_button = 1
+        self.update_card_flip_animation_buttons(card_flip_button)
 
     def update_theme_buttons(self, button_id):
         if button_id == 0:
@@ -1540,7 +1555,26 @@ class SettingsScreen(Screen):
 
         new_setting = ("theme", self.theme)
         save_settings(new_setting)
-    
+
+    def update_card_flip_animation_buttons(self, button_id):
+        if button_id == 0:
+            self.card_flip_animation_flip_button.disabled = True
+            self.card_flip_animation_zoom_button.disabled = False
+            self.card_flip_animation = "flip"
+        elif button_id == 1:
+            self.card_flip_animation_flip_button.disabled = False
+            self.card_flip_animation_zoom_button.disabled = True
+            self.card_flip_animation = "zoom"
+
+        new_setting = ("card_flip_animation", self.card_flip_animation)
+        save_settings(new_setting)
+
+        if self.app is not None:
+            self.app.change_theme_color(self.theme_color)
+        else:
+            self.app = App.get_running_app()
+            self.app.change_theme_color(self.theme_color)
+
     def update_game_over_animation_buttons(self, button_id):
         new_setting = ("game_over_animation", "None")
         if button_id == 0:

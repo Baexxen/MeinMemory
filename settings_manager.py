@@ -5,6 +5,7 @@ import json
 # Standardwerte für die Einstellungen
 default_settings = {
     "game_over_animation": "None",
+    "card_flip_animation": "flip",
     "theme": "color",
     "touch_delay": 10,
     "ai_timeout": 1.0,

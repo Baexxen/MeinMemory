@@ -352,6 +352,9 @@
     touch_delay_label: touch_delay_label
     ai_timeout_label: ai_timeout_label
     hide_cards_timeout_label: hide_cards_timeout_label
+    card_flip_animation_label: card_flip_animation_label
+    card_flip_animation_flip_button: card_flip_animation_flip_button
+    card_flip_animation_zoom_button: card_flip_animation_zoom_button
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
@@ -396,6 +399,26 @@
                 size_hint: 0.2, 1
                 on_release:
                     root.update_theme_buttons(3)
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 5
+            LabelBackgroundColor:
+                text: "Animation von Karten: "
+                id: card_flip_animation_label
+                size_hint: 0.2, 1
+            ButtonBackgroundColor:
+                text: "Flip-Effekt"
+                size_hint: 0.2, 1
+                id: card_flip_animation_flip_button
+                on_release:
+                    root.update_card_flip_animation_buttons(0)
+            ButtonBackgroundColor:
+                text: "Zoom-Effekt"
+                size_hint: 0.2, 1
+                id: card_flip_animation_zoom_button
+                on_release:
+                    root.update_card_flip_animation_buttons(1)
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
