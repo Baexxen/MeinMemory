@@ -98,6 +98,7 @@ class MyMemoryApp(App):
         super().__init__(**kwargs)
         self.current_difficulty = "easy"
         self.game_screen = None
+        self.who_starts_screen = None
         self.pics_list = []
         self.car_images = []
         self.akira_images = []
@@ -123,6 +124,8 @@ class MyMemoryApp(App):
         sm.add_widget(BattleModeScreen(name="battle_mode"))
         sm.add_widget(SettingsScreen(name="settings"))
         sm.add_widget(PicsSelectScreen(name="pics_select"))
+        sm.add_widget(WhoStartsScreen(name="who_starts"))
+
         sm.current = "main_menu"
         sm.transition = SwapTransition()
         return sm
@@ -135,6 +138,7 @@ class MyMemoryApp(App):
         self.game_screen = self.root.get_screen("game")
         self.load_pictures()
         Clock.schedule_once(self.load_settings, .2)
+        self.who_starts_screen = self.root.get_screen("who_starts")
 
     def start_new_game(self, board_size="small", game_mode="standard", difficulty="easy"):
         print(f"MyMemoryApp start new game {game_mode} {difficulty}")
@@ -143,10 +147,14 @@ class MyMemoryApp(App):
         self.game_screen.current_difficulty = self.current_difficulty
         self.game_screen.cards = BOARD_SIZES[board_size]
         self.game_screen.board_size = board_size
-
         self.load_active_pics_lists()
         self.game_screen.restart_game()
-        self.root.current = "game"
+        # if game_mode == "battle" or game_mode == "duell_standard":
+        #    self.who_starts_screen.init_settings(game_mode, difficulty, board_size)
+        #    self.root.current = "who_starts"
+        # else:
+        if game_mode != "battle" and game_mode != "duell_standard":
+            self.root.current = "game"
 
         if game_mode == "standard":
             pass
@@ -504,6 +512,7 @@ class AI(Player):
         self.known_cards.clear()
         self.game_screen = self.app.root.get_screen("game")
         self.difficulty = self.game_screen.current_difficulty
+        self.name = {"easy": "Sepp", "medium": "Maja", "hard": "Juniper", "impossible": "Jasmin"}[self.difficulty]
         self.base_error_probability = {"easy": 35, "medium": 15, "hard": 5, "impossible": 0}[self.difficulty]
         self.save_call_threshold = {"easy": 3, "medium": 2, "hard": 1, "impossible": 0}[self.difficulty]
         self.active_cards.clear()
@@ -526,7 +535,88 @@ class Card(ButtonBehavior, Image):
         self.default_pic = "pics/Default.png"
         self.keep_ratio = False
         self.allow_stretch = True
-        self.move_speed = 2.0
+        self.move_speed = 2.0  # Für Animation am Spielende
+        self.card_size_max = None
+        self.card_size_base = None
+        self.card_zoom_factor = 10
+        self.zoom_event = None
+        self.shrink_event = None
+        self.zoom_step = 2  # Schrittweite für Zoom von Card
+        self.flip_step = 6  # Schrittweite für Flip von Card
+        self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
+        self.clicked_animation = "zoom"
+        self.starting_pos = (0, 0)
+        self.pic = None
+
+    def clicked(self):
+        print(f"card_clicked: Animation: {self.clicked_animation}")
+        if self.zoom_event:
+            Clock.unschedule(self.zoom_event)
+            self.size = self.card_size_base
+            self.pos = self.starting_pos
+        if self.shrink_event:
+            Clock.unschedule(self.shrink_event)
+            self.size = self.card_size_base
+            self.pos = self.starting_pos
+        # Startet das Zoom-Event
+        self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom(), 0.01)
+
+    def zoom(self):
+        if self.clicked_animation == "zoom":
+            if self.size[0] < self.card_size_max[0]:
+                self.size = (self.size[0] + self.zoom_step, self.size[1] + self.zoom_step)
+                self.pos = (self.pos[0] - self.pos_step, self.pos[1] - self.pos_step)
+            else:
+                if self.zoom_event:
+                    Clock.unschedule(self.zoom_event)
+                    self.zoom_event = None
+                if self.shrink_event:
+                    Clock.unschedule(self.shrink_event)
+
+                # Shrink-Event starten
+                if self.flipped:
+                    self.source = self.pic
+                # self.source = self.pic if self.source == self.default_pic else self.default_pic
+                # self.flipped = True if not self.flipped else False
+                self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), 0.01)
+        elif self.clicked_animation == "flip":
+            if self.width > self.zoom_step:
+                self.width -= self.flip_step
+                self.pos[0] += self.flip_step // 2
+            else:
+                self.width = 0
+                self.source = self.pic if self.source == self.default_pic else self.default_pic
+                # self.flipped = True if not self.flipped else False
+                if self.zoom_event:
+                    Clock.unschedule(self.zoom_event)
+                if self.shrink_event:
+                    Clock.unschedule(self.shrink_event)
+                self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), 0.01)
+
+    def shrink(self):
+        if self.clicked_animation == "zoom":
+            if self.size[0] > self.card_size_base[0]:
+                self.size = (self.size[0] - self.zoom_step, self.size[1] - self.zoom_step)
+                self.pos = (self.pos[0] + self.pos_step, self.pos[1] + self.pos_step)
+            else:
+                if self.shrink_event:
+                    Clock.unschedule(self.shrink_event)
+                    self.shrink_event = None
+                self.size = self.card_size_base
+                self.game_screen.update()
+
+        elif self.clicked_animation == "flip":
+            if self.width < self.card_size_base[0]:
+                self.width += self.flip_step
+                self.pos[0] -= self.flip_step // 2
+            else:
+                self.width = self.card_size_base[0]
+                if self.shrink_event:
+                    Clock.unschedule(self.shrink_event)
+                    self.shrink_event = None
+                    self.size = self.card_size_base
+                    self.pos = self.starting_pos
+                    self.game_screen.update()
 
     def on_touch_down(self, touch):
         return False
@@ -589,8 +679,8 @@ class GameScreen(Screen):
     def __init__(self, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
         self.size = Window.size
-        self.player = Player("Spieler_1")
-        self.player2 = Player("Spieler_2")
+        self.player = Player("Spieler 1")
+        self.player2 = Player("Spieler 2")
         self.ai = AI("KI Sepp", difficulty="easy")
         self.current_player = self.player
         self.card_list = []
@@ -627,24 +717,30 @@ class GameScreen(Screen):
         self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
         self.game_over_animation_running = None
         self.hello_there_zoom_step = 0.1
+        self.who_starts_screen = None
 
     def restart_game(self):
         self.game_over_label.hide = True
         if self.game_over_animation_running:
             Clock.unschedule(self.game_over_animation_running)
             self.game_over_animation_running = None
-
+        if not self.who_starts_screen:
+            self.get_who_starts_screen()
         if self.current_game_mode == "standard":
             self.top_label.font_size = FONT_SIZE_LARGE
             self.change_top_label_text(f"Einzelspieler")
             self.current_difficulty = "easy"
         elif self.current_game_mode == "battle":
-            self.change_top_label_text(f"Spiel gegen die KI\nAktueller Spieler bist du.")
+            self.change_top_label_text(f"Spiel gegen {self.ai.name}\nAktueller Spieler: {self.current_player.name}.")
+            self.who_starts_screen.init_settings(self.current_game_mode, self.current_difficulty, self.board_size)
+            self.app.root.current = "who_starts"
         elif self.current_game_mode == "time_race":
             self.change_top_label_text("Zeitrennen")
             self.current_difficulty = "easy"
         elif self.current_game_mode == "duell_standard":
-            self.change_top_label_text(f"Duell\nAktueller Spieler ist {self.current_player.name}")
+            self.change_top_label_text(f"Duell\nAktueller Spieler: {self.current_player.name}")
+            self.who_starts_screen.init_settings(self.current_game_mode, self.current_difficulty, self.board_size)
+            self.app.root.current = "who_starts"
 
         self.memory_grid.clear_widgets()
         self.memory_grid.update_rect()
@@ -673,9 +769,6 @@ class GameScreen(Screen):
 
         self.game_over = False
         self.game_running = True
-        self.player.reset()
-        self.player2.reset()
-        self.ai.reset()
         self.time_race_running = False
         self.first_flip = True
         self.elapsed_time = 0
@@ -684,14 +777,17 @@ class GameScreen(Screen):
         self.reset_widgets()
         self.game_over_label.hide = True
         self.game_over_label.font_size = FONT_SIZE_LARGE
-
         if self.current_game_mode != "duell_standard":
             highscores = load_best_scores()
             current_game = f"{self.current_game_mode}_{self.current_difficulty}_{self.board_size}"
             self.current_highscore = highscores[current_game]
             self.update_time_display()
-        self.update()
         self.load_settings()
+        self.player.reset()
+        self.player2.reset()
+        self.ai.reset()
+        self.current_player = self.player
+        self.update()
 
     def update(self):
         print("GameScreen: update")
@@ -699,13 +795,14 @@ class GameScreen(Screen):
         count_found_cards = 0
         for card in self.card_list:
             if not card.disabled:
-                if card.flipped:
+                if card.flipped and not card.shrink_event and not card.zoom_event:
                     card.source = card.pic
                 else:
                     if DEBUGGING:
                         card.source = card.pic
                     else:
-                        card.source = card.default_pic
+                        if not card.shrink_event and not card.zoom_event:
+                            card.source = card.default_pic
             else:
                 card.source = card.pic
                 count_found_cards += 1
@@ -730,13 +827,20 @@ class GameScreen(Screen):
                 score = self.elapsed_time
                 if score > 2:
                     highscore_valid = True
+            elif self.current_game_mode == "duell_standard":
+                score_1 = self.player.score
+                score_2 = self.player2.score
+                highscore_valid = True
+
             if highscore_valid:
                 highscore = update_best_scores(self.current_game_mode, self.current_difficulty, self.board_size, score)
                 if highscore:
                     self.change_top_label_text("Neuer Highscore =)")
                     self.current_highscore = score
-
-                    self.game_over_label.text = f"Neuer Highscore =)\nPunkte: {score}"
+                    if self.current_game_mode != "time_race":
+                        self.game_over_label.text = f"Neuer Highscore =)\nPunkte: {score}"
+                    else:
+                        self.game_over_label.text = f"Neuer Highscore =)\nBenötigte Zeit: {score} Sekunden"
                     self.game_over_label.hide = False
                     self.game_over_label.opacity = 1
                     self.game_over_label.redraw()
@@ -745,17 +849,21 @@ class GameScreen(Screen):
                     if self.current_game_mode == "duell_standard":
                         if self.player.score > self.player2.score:
                             self.change_top_label_text("Spieler_1 hat gewonnen :-)")
+                            game_over_label_text = f"{self.player.name} hat gewonnen :-)"
                         elif self.player.score == self.player2.score:
                             self.change_top_label_text("Unentschieden :-O")
+                            game_over_label_text = "Unentschieden :-O"
                         else:
                             self.change_top_label_text("Spieler_2 hat gewonnen :-)")
+                            game_over_label_text = f"{self.player2.name} hat gewonnen :-)"
                     else:
                         self.change_top_label_text("Keine neue Bestleistung... Vielleicht nächstes Mal ;-)")
+                        game_over_label_text = "Keine neue Bestleistung... Vielleicht nächstes Mal ;-)"
 
-                        self.game_over_label.text = "Keine neue Bestleistung... Vielleicht nächstes Mal ;-)"
-                        self.game_over_label.hide = False
-                        self.game_over_label.opacity = 1
-                        self.game_over_label.redraw()
+                    self.game_over_label.text = game_over_label_text
+                    self.game_over_label.hide = False
+                    self.game_over_label.opacity = 1
+                    self.game_over_label.redraw()
                     self.start_game_over_animation()
             self.update_time_display()
 
@@ -763,19 +871,11 @@ class GameScreen(Screen):
             Clock.unschedule(self.update_time)
             self.time_race_running = False
 
-        # if self.game_running:
-        #    self.game_over_label.hide = True
-        #    self.game_over_label.redraw()
-        # else:
-        #    self.game_over_label.hide = False
-        #    self.game_over_label.opacity = 1
-        #    self.game_over_label.redraw()
-
         if self.current_game_mode == "standard":
             self.bottom_label.text = f"Runde: {self.player.turns}\nRekord: {self.current_highscore}"
 
         elif self.current_game_mode == "duell_standard":
-            self.bottom_label.text = f"Runde: {self.player.turns}\nPlayer1: {self.player.score} Player2: {self.player2.score}"
+            self.bottom_label.text = f"Runde: {self.player.turns}\n{self.player.name}: {self.player.score}\n{self.player2.name}: {self.player2.score}"
         elif self.current_game_mode == "battle":
             self.bottom_label.text = f"Punkte: {self.player.score}\nRekord: {self.current_highscore}"
 
@@ -783,7 +883,6 @@ class GameScreen(Screen):
             pass
 
     def update_card_pos_and_size(self):
-        print("***********update_card_pos_and_size++++++++++++++")
         # Fenstergröße und Kartenanzahl ermitteln
         window_width, window_height = Window.size
         window_height = window_height * 0.8
@@ -799,7 +898,7 @@ class GameScreen(Screen):
         elif total_cards == BOARD_SIZES["big"]:
             cols = 5
             rows = 6
-
+        self.cols = cols
         # Berechne die Kartengröße auf Basis der Spalten und Reihen
         card_width = window_width / cols
         card_height = window_height / rows
@@ -809,11 +908,14 @@ class GameScreen(Screen):
         for i, card in enumerate(self.card_list):
             card.size_hint = (None, None)
             card.size = (card_width, card_height)
+            card.card_size_max = self.card_size_max
+            card.card_size_base = self.card_size_base
 
             # Kartenposition auf Basis von Spalte und Reihe bestimmen
             row = i // cols
             col = i % cols
             card.pos = (col * card_width, window_height - (row + 1) * card_height)
+            card.starting_pos = (col * card_width, window_height - (row + 1) * card_height)
 
     def on_touch_down(self, touch):
         self.active_touches.add(touch.uid)
@@ -826,10 +928,10 @@ class GameScreen(Screen):
 
     def flip_card(self, card):
         print("flip_card")
-        self.card_clicked(card)
+        card.clicked()
         first_card = card
         first_card.flipped = True
-        first_card.source = first_card.pic
+        # first_card.source = first_card.pic
         self.ai.remember_card(first_card)
         second_card = None
 
@@ -879,6 +981,7 @@ class GameScreen(Screen):
         for card in self.card_list:
             if card == first_card or card == second_card:
                 card.disabled = True
+                card.flipped = True
                 print(f"Karte {card.value} disabled.")
         self.input_enabled = True
         self.ai.remove_pair(first_card)
@@ -887,6 +990,7 @@ class GameScreen(Screen):
         print("GameScreen: hide_cards")
         for card in self.card_list:
             if card == first_card or card == second_card:
+                card.clicked()
                 card.flipped = False
         self.input_enabled = True
         self.update()
@@ -984,45 +1088,14 @@ class GameScreen(Screen):
             self.start_time_count_up()
         return super().on_pre_enter()
 
-    def card_clicked(self, zoom_card):
-        print("card_clicked: scheduling zoom")
-        if self.zoom_event:
-            Clock.unschedule(self.zoom_event)
-
-        # Startet das Zoom-Event
-        self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom_card(zoom_card), 0.01)
-
-    def zoom_card(self, zoom_card):
-        if zoom_card.size[0] < self.card_size_max[0]:
-            zoom_card.size = (zoom_card.size[0] + self.zoom_step, zoom_card.size[1] + self.zoom_step)
-            zoom_card.pos = (zoom_card.pos[0] - self.pos_step, zoom_card.pos[1] - self.pos_step)
-        else:
-            if self.zoom_event:
-                Clock.unschedule(self.zoom_event)
-                self.zoom_event = None
-            if self.shrink_event:
-                Clock.unschedule(self.shrink_event)
-
-            # Shrink-Event starten
-            self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink_card(zoom_card), 0.01)
-
-    def shrink_card(self, shrink_card):
-        if shrink_card.size[0] > self.card_size_base[0]:
-            shrink_card.size = (shrink_card.size[0] - self.zoom_step, shrink_card.size[1] - self.zoom_step)
-            shrink_card.pos = (shrink_card.pos[0] + self.pos_step, shrink_card.pos[1] + self.pos_step)
-        else:
-            if self.shrink_event:
-                Clock.unschedule(self.shrink_event)
-                self.shrink_event = None
-            shrink_card.size = self.card_size_base
-
     def start_game_over_animation(self):
-        if self.game_over_animation == "FreeFall":
-            self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.free_fall(), 0.05)
-        elif self.game_over_animation == "ByeBye":
-            self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.bye_bye(), 0.05)
-        elif self.game_over_animation == "HelloThere":
-            self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.hello_there(), 0.05)
+        if not self.game_over_animation_running:
+            if self.game_over_animation == "FreeFall":
+                self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.free_fall(), 0.05)
+            elif self.game_over_animation == "ByeBye":
+                self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.bye_bye(), 0.05)
+            elif self.game_over_animation == "HelloThere":
+                self.game_over_animation_running = Clock.schedule_interval(lambda dt: self.hello_there(), 0.05)
 
     def free_fall(self):
         cards_falling = 0
@@ -1055,7 +1128,11 @@ class GameScreen(Screen):
             self.scatter.scale = self.scatter.scale_max
         if self.scatter.scale == self.scatter.scale_max:
             Clock.unschedule(self.game_over_animation_running)
+            print("GameOverAnimation beendet ############################################")
             self.game_over_animation_running = None
+
+    def get_who_starts_screen(self):
+        self.who_starts_screen = self.app.root.get_screen("who_starts")
 
 
 class MainMenuScreen(Screen):
@@ -1202,7 +1279,8 @@ class DuellModeScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.current_board_size = "small"
+        self.current_difficulty = "easy"
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -1215,6 +1293,10 @@ class DuellModeScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def init_new_game(self, mode):
+        app = App.get_running_app()
+        app.start_new_game(self.current_board_size, mode, self.current_difficulty)
 
     def on_pre_enter(self, *args):
         app = App.get_running_app()
@@ -1644,6 +1726,67 @@ class PicsSelectScreen(Screen):
         self.theme_color = get_theme_color(theme)
         self.update_checkbox_theme()
         self.redraw()
+
+
+class WhoStartsScreen(Screen):
+    top_label = ObjectProperty(None)
+    head_button = ObjectProperty(None)
+    tail_button = ObjectProperty(None)
+    coin = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.current_difficulty = "easy"
+        self.current_board_size = "small"
+        self.current_game_mode = "battle"
+        self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.bind(pos=self.update_rect, size=self.update_rect)
+        self.theme = "color"
+        self.theme_color = "color"
+        self.head_button.background_normal = "gfx/misc/Kopf.png"
+        self.tail_button.background_normal = "gfx/misc/Zahl.png"
+        self.app = None
+        self.game_screen = None
+        self.duell_screen = None
+        self.pick = None
+
+    def update_rect(self, *args):
+        self.rect.pos = self.pos
+        self.rect.size = self.size
+
+    def on_pre_enter(self, *args):
+        self.redraw()
+
+    def redraw(self):
+        print(f"WhoStartsScreen: redraw")
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def init_settings(self, mode, difficulty, board_size):
+        self.current_board_size = board_size
+        self.current_difficulty = difficulty
+        self.current_game_mode = mode
+        self.top_label.text = "Wer beginnt? Wähle 'Kopf' oder 'Zahl'."
+        if not self.app:
+            self.app = App.get_running_app()
+        if not self.game_screen:
+            self.game_screen = self.app.root.get_screen("game")
+
+    def pick_side(self, coin):
+        if coin != self.pick:
+            self.game_screen.switch_player()
+            if self.game_screen.current_player == self.game_screen.ai:
+                first_card = self.game_screen.card_list[1]
+                second_card = self.game_screen.card_list[2]
+                players_last_cards = (first_card, second_card)
+                Clock.schedule_once(lambda dt: self.game_screen.ai_turn(players_last_cards), self.game_screen.ai_timeout + 2)
+        self.top_label.text = f"{self.game_screen.current_player.name} beginnt das Spiel :)"
+        Clock.schedule_once(lambda dt: self.switch_to_game(), 1.5)
+
+    def switch_to_game(self):
+        self.app.root.current = "game"
+
 # endregion
 
 

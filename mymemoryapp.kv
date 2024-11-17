@@ -1,3 +1,79 @@
+# Eigentliches Spiel
+<GameScreen>:
+    layout: layout
+    memory_grid: memory_grid
+    scatter: scatter
+    bottom_label: bottom_label
+    top_label: top_label
+    top_layout: top_layout
+    scatter_layout: scatter_layout
+    bottom_layout: bottom_layout
+    game_over_label: game_over_label
+
+    FloatLayout:
+        id: layout
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 0.8
+            pos_hint: {"x": 0, "y": 0.1}
+            id: scatter_layout
+            MyScatter:
+                id: scatter
+                MyMemoryGrid:
+                    id: memory_grid
+                    cols: 6  # Beispielwert
+                    size_hint: 1, 1
+                    spacing: 0
+
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 0.1  # Oberes BoxLayout (10% des Fensters)
+            pos_hint: {'x': 0, "top": 1}
+            id: top_layout
+            LabelBackgroundColor:
+                id: top_label
+                font_size: app.large_font
+                text: "Standard-Modus"
+                size_hint: 1, 1
+
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 0.1  # Unteres Layout (10% des Fensters)
+            pos_hint: {"x": 0, "bottom": 1}
+            id: bottom_layout
+            GridLayout:
+                cols: 4
+                size_hint: 1, 1
+                padding: (5, 5, 5, 5)
+                spacing: 5
+                ButtonBackgroundColor:
+                    text: "Menü"
+                    size_hint: 0.25, 1
+                    on_press: app.root.current = "main_menu"
+                ButtonBackgroundColor:
+                    text: "Neustart"
+                    size_hint: 0.25, 1
+                    on_press: root.restart_game()
+                ButtonBackgroundColor:
+                    text: "Beenden"
+                    size_hint: 0.25, 1
+                    on_press: app.exit_app()
+                LabelBackgroundColor:
+                    id: bottom_label
+                    text: "Nirs zu moche"
+                    size_hint: 0.25, 1
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 0.2
+            pos_hint: {"x": 0, "top": 0.8}
+            LabelBackgroundColor:
+                id: game_over_label
+                text: "Schau mer mal"
+                size_hint: 1, 1
+                border: True
+                border_size: 3
+                hide: True
+                blend_out: True
 # Hauptmenü
 <MainMenuScreen>:
     continue_button: continue_button
@@ -163,19 +239,25 @@
         ButtonBackgroundColor:
             text: "Klein"
             on_release:
-                app.start_new_game("small", "duell_standard")
+                # app.start_new_game("small", "duell_standard")
+                root.board_size = "small"
+                root.init_new_game("duell_standard")
         ButtonBackgroundColor:
             text: "Mittel"
             on_release:
-                app.start_new_game("medium", "duell_standard")
+                # app.start_new_game("medium", "duell_standard")
+                root.board_size = "medium"
+                root.init_new_game("duell_standard")
         ButtonBackgroundColor:
             text: "Groß"
             on_release:
-                app.start_new_game("big", "duell_standard")
+                # app.start_new_game("big", "duell_standard")
+                root.board_size = "big"
+                root.init_new_game("duell_standard")
         ButtonBackgroundColor:
             text: "Zurück"
             on_release:
-                app.root.current = "main_menu"
+                app.root.current = "multiplayer_mode"
 
 # Kampf-Modus
 <BattleModeScreen>:
@@ -248,7 +330,7 @@
             ButtonBackgroundColor:
                 text: "Zurück"
                 on_release:
-                    app.root.current = "main_menu"
+                    app.root.current = "multiplayer_mode"
             ButtonBackgroundColor:
                 text: "Spiel starten"
                 on_release:
@@ -535,79 +617,44 @@
             on_release:
                 app.root.current = "settings"
 
-# Eigentliches Spiel
-<GameScreen>:
-    layout: layout
-    memory_grid: memory_grid
-    scatter: scatter
-    bottom_label: bottom_label
+# Bildschirm zur Auswahl des 'Beginners'
+<WhoStartsScreen>:
     top_label: top_label
-    top_layout: top_layout
-    scatter_layout: scatter_layout
-    bottom_layout: bottom_layout
-    game_over_label: game_over_label
+    head_button: head_button
+    tail_button: tail_button
+    coin: coin
 
     FloatLayout:
-        id: layout
-        BoxLayout:
-            orientation: "horizontal"
-            size_hint: 1, 0.8
-            pos_hint: {"x": 0, "y": 0.1}
-            id: scatter_layout
-            MyScatter:
-                id: scatter
-                MyMemoryGrid:
-                    id: memory_grid
-                    cols: 6  # Beispielwert
-                    size_hint: 1, 1
-                    spacing: 0
-
-        BoxLayout:
-            orientation: "horizontal"
-            size_hint: 1, 0.1  # Oberes BoxLayout (10% des Fensters)
-            pos_hint: {'x': 0, "top": 1}
-            id: top_layout
-            LabelBackgroundColor:
-                id: top_label
-                font_size: app.large_font
-                text: "Standard-Modus"
-                size_hint: 1, 1
-
-        BoxLayout:
-            orientation: "horizontal"
-            size_hint: 1, 0.1  # Unteres Layout (10% des Fensters)
-            pos_hint: {"x": 0, "bottom": 1}
-            id: bottom_layout
-            GridLayout:
-                cols: 4
-                size_hint: 1, 1
-                padding: (5, 5, 5, 5)
-                spacing: 5
-                ButtonBackgroundColor:
-                    text: "Menü"
-                    size_hint: 0.25, 1
-                    on_press: app.root.current = "main_menu"
-                ButtonBackgroundColor:
-                    text: "Neustart"
-                    size_hint: 0.25, 1
-                    on_press: root.restart_game()
-                ButtonBackgroundColor:
-                    text: "Beenden"
-                    size_hint: 0.25, 1
-                    on_press: app.exit_app()
-                LabelBackgroundColor:
-                    id: bottom_label
-                    text: "Nirs zu moche"
-                    size_hint: 0.25, 1
-        BoxLayout:
-            orientation: "horizontal"
+        LabelBackgroundColor:
+            font_size: app.large_font
+            text: "Wer beginnt? Wähle 'Kopf' oder 'Zahl'."
+            id: top_label
+            pos_hint: {"x": 0, "top": 1}
             size_hint: 1, 0.2
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 1
             pos_hint: {"x": 0, "top": 0.8}
-            LabelBackgroundColor:
-                id: game_over_label
-                text: "Schau mer mal"
-                size_hint: 1, 1
-                border: True
-                border_size: 3
-                hide: True
-                blend_out: True
+            size_hint: 1, 0.2
+            ButtonBackgroundColor:
+                text: "Kopf"
+                id: head_button
+                on_release:
+                    root.coin.start_flip("head")
+            ButtonBackgroundColor:
+                text: "Zahl"
+                id: tail_button
+                on_release:
+                    root.coin.start_flip("tail")
+        Coin:
+            pos_hint: {"x": 0.45, "top": 0.55}
+            size_hint: None, None
+            # size: 100, 100
+            id: coin
+        ButtonBackgroundColor:
+            text: "Zurück"
+            pos_hint: {"x": 0, "top": 0.2}
+            size_hint: 1, 0.2
+            on_release:
+                app.root.current = "main_menu"

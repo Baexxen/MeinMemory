@@ -1,4 +1,8 @@
 # Angepasste Layouts und Ähnliches
+from cProfile import label
+from random import randint
+
+from kivy.uix.image import Image
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
@@ -85,6 +89,9 @@ class MyScatter(ScatterPlane):
         self.touch_down_time += 1
         if self.touch_down_time > self.touch_delay:
             self.transformed = True
+            if self.game_screen.game_over_animation_running:
+                Clock.unschedule(self.game_screen.game_over_animation_running)
+                self.game_screen.game_over_animation_running = None
         return super().on_transform_with_touch(touch)
 
     def get_settings(self):
@@ -165,7 +172,7 @@ class LabelBackgroundColor(Label):
         else:
             self.rect.pos = self.pos
             self.rect.size = self.size
-        self.text_size = self.size[0] - 2 * self.border_width, self.size[1] - 2 * self.border_width
+        # self.text_size = self.size[0] - 2 * self.border_width, self.size[1] - 2 * self.border_width
         self.redraw()
 
     def redraw(self, back_color=None, text_color=None, border=None, border_color=None, border_width=None):
@@ -250,7 +257,6 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
         self.text_color = text_color
         self.text_disabled_color = GREY
         self.bold = False
-        # self.font_size = 16
         self.halign = "center"
         self.valign = "center"
         Clock.schedule_once(self.add_to_button_list, .1)
@@ -326,6 +332,11 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
                 self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def change_theme(self, theme):
+        self.background_normal = "pics/white.png"
+        self.background_disabled = ""
+        self.background_disabled_down = ""
+        self.background_color_down = BUTTON_THEMES[theme]["btn_bg_down"]
+        self.text_disabled_color = BUTTON_THEMES[theme]["btn_txt_dis_color"]
         self.back_color = BUTTON_THEMES[theme]["btn_bg_color_normal"]
         self.background_color_normal = self.back_color
         self.border_color = BUTTON_THEMES[theme]["btn_border_color"]
@@ -333,11 +344,6 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
         self.color = self.text_color
         self.background_color_disabled = BUTTON_THEMES[theme]["btn_bg_dis_normal"]
         self.disabled_color = BUTTON_THEMES[theme]["btn_txt_dis_color"]
-        self.background_normal = "pics/white.png"
-        self.background_disabled = ""
-        self.background_disabled_down = ""
-        self.background_color_down = BUTTON_THEMES[theme]["btn_bg_down"]
-        self.text_disabled_color = BUTTON_THEMES[theme]["btn_txt_dis_color"]
         self.redraw()
 
     def add_to_button_list(self, *args):
@@ -353,3 +359,68 @@ class ButtonBackgroundColor(ButtonBehavior, Label):
         self.back_color = self.background_color_down
         self.redraw()
         return super().on_press()
+
+
+class Coin(Image):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.head_image = "gfx/misc/Kopf.png"
+        self.tail_image = "gfx/misc/Zahl.png"
+        self.source = self.head_image
+        self.keep_ratio = False
+        self.allow_stretch = True
+        self.size_hint = None, None
+        self.size = (100, 100)  # Anfangsgröße der Münze
+        self.starting_size = (100, 100)  # Anfangsgröße der Münze
+        self.is_flipping = False
+        self.shrink_step = 4
+        self.flips = 0
+        self.flip_event = None
+        self.flip_delay = 0.01
+        self.shrinking = True
+        self.parent_screen = None
+
+    def start_flip(self, pick):
+        if not self.is_flipping:
+            self.is_flipping = True
+            self.flips = randint(3, 10)  # Anzahl der Umdrehungen
+            self.flip_event = Clock.schedule_interval(self.flip, self.flip_delay)
+            self.pos_hint = {}
+            if not self.parent_screen:
+                app = App.get_running_app()
+                self.parent_screen = app.root.get_screen("who_starts")
+            self.parent_screen.pick = pick
+
+    def flip(self, dt):
+        # Schrumpfen der Münze
+        if self.shrinking:
+            if self.width > self.shrink_step:
+                self.width -= self.shrink_step
+                self.pos[0] += self.shrink_step // 2
+            else:
+                self.width = 0
+                self.source = self.tail_image if self.source == self.head_image else self.head_image
+                self.shrinking = False
+                self.shrink_step = 4
+        else:  # Münze wird größer
+            if self.width < self.starting_size[0]:
+                self.width += self.shrink_step
+                self.pos[0] -= self.shrink_step // 2
+            else:
+                self.width = self.starting_size[0]
+                self.flips -= 1
+                if self.flips <= 0:
+                    self.stop_flip()
+                else:
+                    self.shrinking = True
+                    self.shrink_step = 4
+
+    def stop_flip(self):
+        Clock.unschedule(self.flip_event)
+        self.is_flipping = False
+        self.width = self.starting_size[0]
+        if self.source == self.head_image:
+            coin = "head"
+        else:
+            coin = "tail"
+        self.parent_screen.pick_side(coin)
