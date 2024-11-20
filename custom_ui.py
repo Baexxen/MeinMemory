@@ -172,7 +172,7 @@ class LabelBackgroundColor(Label):
         else:
             self.rect.pos = self.pos
             self.rect.size = self.size
-        # self.text_size = self.size[0] - 2 * self.border_width, self.size[1] - 2 * self.border_width
+        self.text_size = self.size[0] - 2 * self.border_width, self.size[1] - 2 * self.border_width
         self.redraw()
 
     def redraw(self, back_color=None, text_color=None, border=None, border_color=None, border_width=None):

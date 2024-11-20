@@ -1614,7 +1614,7 @@ class SettingsScreen(Screen):
             self.app.change_theme_color(self.theme_color)
 
     def change_touch_delay_label_text(self):
-        self.touch_delay_label.text = f"Touch-Delay: {self.touch_delay} (Standard = 10)\nTrägheit der 'Touch-Erkennung'\nHöherer Wert verhindert eventuell versehentliches Verschieben des Spielfeldes"
+        self.touch_delay_label.text = f"Touch-Delay: {self.touch_delay} (Standard = 10)\nTrägheit der 'Touch-Erkennung'"
 
     def increase_touch_delay(self):
         self.touch_delay += 1
