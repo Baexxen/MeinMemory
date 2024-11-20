@@ -1,5 +1,4 @@
 # Angepasste Layouts und Ähnliches
-from cProfile import label
 from random import randint
 
 from kivy.uix.image import Image
@@ -14,6 +13,7 @@ from kivy.graphics import Color, Rectangle
 from kivy.core.window import Window
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from jnius import autoclass
 
@@ -369,14 +369,17 @@ class Coin(Image):
         self.source = self.head_image
         self.keep_ratio = False
         self.allow_stretch = True
-        self.size_hint = None, None
-        self.size = (100, 100)  # Anfangsgröße der Münze
-        self.starting_size = (100, 100)  # Anfangsgröße der Münze
+        self.pos_hint = {"x": 0.3, "top": 0.55}
+        self.starting_pos = None
+        self.size_hint = (0.4, 0.25)
+        self.starting_size = None  # Anfangsgröße der Münze
+        self.starting_width = 0
         self.is_flipping = False
-        self.shrink_step = 4
+        self.shrink_step = 10
+        self.starting_shrink_step = self.shrink_step
         self.flips = 0
         self.flip_event = None
-        self.flip_delay = 0.01
+        self.flip_delay = 0.1
         self.shrinking = True
         self.parent_screen = None
 
@@ -385,7 +388,14 @@ class Coin(Image):
             self.is_flipping = True
             self.flips = randint(3, 10)  # Anzahl der Umdrehungen
             self.flip_event = Clock.schedule_interval(self.flip, self.flip_delay)
+            self.starting_pos = tuple(self.pos)
+            self.starting_size = tuple(self.size)
+            self.starting_width = self.starting_size[0]
+            self.shrink_step = self.starting_width / 4
+            self.starting_shrink_step = self.shrink_step
             self.pos_hint = {}
+            self.size_hint = (None, None)
+            self.size = tuple(self.starting_size)
             if not self.parent_screen:
                 app = App.get_running_app()
                 self.parent_screen = app.root.get_screen("who_starts")
@@ -396,31 +406,46 @@ class Coin(Image):
         if self.shrinking:
             if self.width > self.shrink_step:
                 self.width -= self.shrink_step
-                self.pos[0] += self.shrink_step // 2
+                self.x += self.shrink_step / 2
             else:
                 self.width = 0
+                self.x = (self.starting_pos[0] + self.starting_width//2)
                 self.source = self.tail_image if self.source == self.head_image else self.head_image
                 self.shrinking = False
-                self.shrink_step = 4
+                self.shrink_step = self.starting_shrink_step
         else:  # Münze wird größer
             if self.width < self.starting_size[0]:
                 self.width += self.shrink_step
-                self.pos[0] -= self.shrink_step // 2
+                self.x -= self.shrink_step / 2
             else:
                 self.width = self.starting_size[0]
                 self.flips -= 1
+                self.pos = tuple(self.starting_pos)
                 if self.flips <= 0:
                     self.stop_flip()
                 else:
                     self.shrinking = True
-                    self.shrink_step = 4
+                    self.shrink_step = self.starting_shrink_step
 
     def stop_flip(self):
         Clock.unschedule(self.flip_event)
+        self.flip_event = None
         self.is_flipping = False
         self.width = self.starting_size[0]
+        self.pos = tuple(self.starting_pos)
+        self.shrinking = True
         if self.source == self.head_image:
             coin = "head"
         else:
             coin = "tail"
         self.parent_screen.pick_side(coin)
+
+    def disrupt_flip(self):
+        if self.flip_event:
+            Clock.unschedule(self.flip_event)
+            self.flip_event = None
+            self.is_flipping = False
+            self.shrinking = True
+            self.width = self.starting_size[0]
+            self.pos = tuple(self.starting_pos)
+            self.shrink_step = self.starting_shrink_step

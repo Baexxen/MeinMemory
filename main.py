@@ -1821,6 +1821,9 @@ class WhoStartsScreen(Screen):
     def switch_to_game(self):
         self.app.root.current = "game"
 
+    def on_leave(self, *args):
+        self.coin.disrupt_flip()
+
 # endregion
 
 
