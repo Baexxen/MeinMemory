@@ -542,8 +542,11 @@ class Card(ButtonBehavior, Image):
         self.zoom_event = None
         self.shrink_event = None
         self.zoom_step = 2  # Schrittweite für Zoom von Card
-        self.flip_step = 8  # Schrittweite für Flip von Card
+        self.flip_step = None  # Schrittweite für Flip von Card -> wird bei 'clicked' berechnet
+        self.flip_steps = 4  # Anzahl von Schritten pro 180-Grad-Flip
         self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
+        self.animation_delay = 0.1
+        self.flip_duration = self.flip_steps * self.animation_delay
         self.starting_pos = (0, 0)
         self.pic = None
         self.flip_animation = "flip"
@@ -559,7 +562,8 @@ class Card(ButtonBehavior, Image):
             self.size = self.card_size_base
             self.pos = self.starting_pos
         # Startet das Zoom-Event
-        self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom(), 0.01)
+        self.flip_step = self.card_size_base[0] / self.flip_steps
+        self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom(), self.animation_delay)
 
     def zoom(self):
         if self.flip_animation == "zoom":
@@ -576,7 +580,7 @@ class Card(ButtonBehavior, Image):
                 # Shrink-Event starten
                 if self.flipped:
                     self.source = self.pic
-                self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), 0.01)
+                self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), self.animation_delay)
         elif self.flip_animation == "flip":
             if self.width > self.zoom_step:
                 self.width -= self.flip_step
@@ -588,7 +592,7 @@ class Card(ButtonBehavior, Image):
                     Clock.unschedule(self.zoom_event)
                 if self.shrink_event:
                     Clock.unschedule(self.shrink_event)
-                self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), 0.01)
+                self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), self.animation_delay)
 
     def shrink(self):
         if self.flip_animation == "zoom":
@@ -1628,7 +1632,7 @@ class SettingsScreen(Screen):
             save_settings(new_setting)
 
     def change_ai_timeout_label_text(self):
-        self.ai_timeout_label.text = f"KI-Verzögerung: {self.ai_timeout} (Standard = 1.0)\n(Muss größer sein als 'Karten verdecken')\nDauer für Aktionen der KI"
+        self.ai_timeout_label.text = f"KI-Verzögerung: {self.ai_timeout} (Standard = 1.2)\n(Muss größer sein als 'Karten verdecken')\nDauer für Aktionen der KI"
 
     def increase_ai_timeout(self):
         self.ai_timeout += 0.1  # Verzögerung der AI-Aktionen (Aufdecken von Karten)
@@ -1644,7 +1648,7 @@ class SettingsScreen(Screen):
             save_settings(new_setting)
 
     def change_hide_cards_timeout_label_text(self):
-        self.hide_cards_timeout_label.text = f"Karten verdecken: {self.hide_cards_timeout} (Standard = 0.8)\n(Muss kleiner sein als 'AI-Timeout')"
+        self.hide_cards_timeout_label.text = f"Karten verdecken: {self.hide_cards_timeout} (Standard = 1.0)\n(Muss kleiner sein als 'AI-Timeout')"
 
     def increase_hide_cards_timeout(self):
         if self.hide_cards_timeout < self.ai_timeout - 0.1:  # Verzögerung vom Verdecken falsch aufgedeckter Karten

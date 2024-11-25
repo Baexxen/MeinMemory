@@ -8,8 +8,8 @@ default_settings = {
     "card_flip_animation": "flip",
     "theme": "color",
     "touch_delay": 10,
-    "ai_timeout": 1.0,
-    "hide_cards_timeout": 0.8
+    "ai_timeout": 1.2,
+    "hide_cards_timeout": 1.0
 }
 
 
