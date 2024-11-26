@@ -543,9 +543,9 @@ class Card(ButtonBehavior, Image):
         self.shrink_event = None
         self.zoom_step = 2  # Schrittweite für Zoom von Card
         self.flip_step = None  # Schrittweite für Flip von Card -> wird bei 'clicked' berechnet
-        self.flip_steps = 4  # Anzahl von Schritten pro 180-Grad-Flip
+        self.flip_steps = 8  # Anzahl von Schritten pro 180-Grad-Flip
         self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
-        self.animation_delay = 0.1
+        self.animation_delay = 0.05
         self.flip_duration = self.flip_steps * self.animation_delay
         self.starting_pos = (0, 0)
         self.pic = None
@@ -617,7 +617,7 @@ class Card(ButtonBehavior, Image):
                     self.shrink_event = None
                     self.size = self.card_size_base
                     self.pos = self.starting_pos
-                    self.game_screen.update()
+                    # self.game_screen.update()
 
     def on_touch_down(self, touch):
         return False
@@ -936,7 +936,6 @@ class GameScreen(Screen):
         card.clicked()
         first_card = card
         first_card.flipped = True
-        # first_card.source = first_card.pic
         self.ai.remember_card(first_card)
         second_card = None
 
