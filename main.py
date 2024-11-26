@@ -546,7 +546,7 @@ class Card(ButtonBehavior, Image):
         self.flip_steps = 8  # Anzahl von Schritten pro 180-Grad-Flip
         self.pos_step = self.zoom_step // 2  # Schrittweite für die Position von Card
         self.animation_delay = 0.05
-        self.flip_duration = self.flip_steps * self.animation_delay
+        self.flip_duration = self.flip_steps * self.animation_delay + 0.2
         self.starting_pos = (0, 0)
         self.pic = None
         self.flip_animation = "flip"
@@ -561,6 +561,8 @@ class Card(ButtonBehavior, Image):
             Clock.unschedule(self.shrink_event)
             self.size = self.card_size_base
             self.pos = self.starting_pos
+        self.zoom_event = None
+        self.shrink_event = None
         # Startet das Zoom-Event
         self.flip_step = self.card_size_base[0] / self.flip_steps
         self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom(), self.animation_delay)
@@ -720,10 +722,11 @@ class GameScreen(Screen):
         self.hello_there_zoom_step = 0.1
         self.who_starts_screen = None
         self.card_flip_animation = "flip"
+        self.flip_duration = 0
 
     def restart_game(self):
         self.load_settings()
-        self.game_over_label.hide = True
+        self.flip_duration = 0
         if self.game_over_animation_running:
             Clock.unschedule(self.game_over_animation_running)
             self.game_over_animation_running = None
@@ -795,9 +798,11 @@ class GameScreen(Screen):
 
     def update(self):
         print("GameScreen: update")
-
         count_found_cards = 0
         for card in self.card_list:
+            if self.flip_duration == 0:
+                self.flip_duration = card.flip_duration
+
             if not card.disabled:
                 if card.flipped and not card.shrink_event and not card.zoom_event:
                     card.source = card.pic
@@ -808,7 +813,7 @@ class GameScreen(Screen):
                         if not card.shrink_event and not card.zoom_event:
                             card.source = card.default_pic
             else:
-                if card.flipped and not card.shrink_event and not card.zoom_event:
+                if not card.shrink_event and not card.zoom_event:
                     card.source = card.pic
                 count_found_cards += 1
             card.text = str(card.value)
@@ -965,7 +970,10 @@ class GameScreen(Screen):
                             self.game_over = True
                         else:
                             players_last_cards = [first_card, second_card]
-                            Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout)
+                            if self.card_flip_animation == "flip":
+                                Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout + self.flip_duration)
+                            else:
+                                Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout)
 
             else:
                 self.input_enabled = False
@@ -977,7 +985,10 @@ class GameScreen(Screen):
                     self.switch_player()
                     if self.current_player == self.ai:
                         players_last_cards = [first_card, second_card]
-                        Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout)
+                        if self.card_flip_animation == "flip":
+                            Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout + self.flip_duration)
+                        else:
+                            Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout)
         self.update()
 
     def kill_cards(self, first_card, second_card):
