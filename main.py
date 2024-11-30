@@ -20,6 +20,9 @@ import os
 import logging
 import time
 
+# Translator
+from translator import Translator
+
 # Highscore
 from score_manager import load_best_scores, save_best_scores, update_best_scores
 
@@ -110,6 +113,7 @@ class MyMemoryApp(App):
         self.theme_color = "color"
         self.button_list = []
         self.label_list = []
+        self.translator = Translator(lang="en")  # Standardsprache ist Englisch
 
     def build(self):
         # Transitions: NoTransition, FadeTransition, SwapTransition, WipeTransition, CardTransition, SlideTransition, ShaderTransition, RiseInTransition, FallOutTransition, TransitionBase
@@ -1170,6 +1174,7 @@ class MainMenuScreen(Screen):
         self.theme_color = "color"
         self.button_list = [self.continue_button, self.standard_button, self.time_button, self.multiplayer_button, self.settings_button, self.exit_button]
         self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.app = None
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -1186,11 +1191,18 @@ class MainMenuScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("main_menu")
+        self.continue_button.text = self.app.translator.gettext("continue_game")
+        self.standard_button.text = self.app.translator.gettext("standard_game")
+        self.time_button.text = self.app.translator.gettext("time_mode")
+        self.multiplayer_button.text = self.app.translator.gettext("multiplayer_mode")
+        self.settings_button.text = self.app.translator.gettext("settings")
+        self.exit_button.text = self.app.translator.gettext("exit")
 
     def on_pre_enter(self, *args):
-        app = App.get_running_app()
-        self.theme_color = app.theme_color
-        app_root = app.root
+        self.app = App.get_running_app()
+        self.theme_color = self.app.theme_color
+        app_root = self.app.root
         if app_root:
             game_screen = app_root.get_screen("game")
             self.update_continue_button(game_screen.game_running)
@@ -1198,10 +1210,15 @@ class MainMenuScreen(Screen):
 
 
 class StandardModeScreen(Screen):
+    top_label = ObjectProperty()
+    back_button = ObjectProperty()
+    small_button = ObjectProperty()
+    medium_button = ObjectProperty()
+    large_button = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.app = None
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -1214,18 +1231,27 @@ class StandardModeScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("standard_game")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.small_button.text = self.app.translator.gettext("small")
+        self.medium_button.text = self.app.translator.gettext("medium")
+        self.large_button.text = self.app.translator.gettext("large")
 
     def on_pre_enter(self, *args):
-        app = App.get_running_app()
-        self.theme_color = app.theme_color
+        if not self.app:
+            self.app = App.get_running_app()
+        self.theme_color = self.app.theme_color
         self.redraw()
 
 
 class TimeModeScreen(Screen):
+    top_label = ObjectProperty()
+    back_button = ObjectProperty()
+    time_race_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.app = None
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -1238,18 +1264,27 @@ class TimeModeScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("time_mode")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.time_race_btn.text = self.app.translator.gettext("time_race")
 
     def on_pre_enter(self, *args):
-        app = App.get_running_app()
-        self.theme_color = app.theme_color
+        if not self.app:
+            self.app = App.get_running_app()
+        self.theme_color = self.app.theme_color
         self.redraw()
 
 
 class TimeRaceScreen(Screen):
+    top_label = ObjectProperty()
+    back_button = ObjectProperty()
+    small_button = ObjectProperty()
+    medium_button = ObjectProperty()
+    large_button = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.app = None
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -1262,18 +1297,28 @@ class TimeRaceScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("time_race")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.small_button.text = self.app.translator.gettext("small")
+        self.medium_button.text = self.app.translator.gettext("medium")
+        self.large_button.text = self.app.translator.gettext("large")
 
     def on_pre_enter(self, *args):
-        app = App.get_running_app()
-        self.theme_color = app.theme_color
+        if not self.app:
+            self.app = App.get_running_app()
+        self.theme_color = self.app.theme_color
         self.redraw()
 
 
 class MultiplayerScreen(Screen):
+    top_label = ObjectProperty()
+    back_button = ObjectProperty()
+    duell_btn = ObjectProperty()
+    battle_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.app = None
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -1286,17 +1331,28 @@ class MultiplayerScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("multiplayer_mode")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.duell_btn.text = self.app.translator.gettext("duell_mode")
+        self.battle_btn.text = self.app.translator.gettext("battle_mode")
 
     def on_pre_enter(self, *args):
-        app = App.get_running_app()
-        self.theme_color = app.theme_color
+        if not self.app:
+            self.app = App.get_running_app()
+        self.theme_color = self.app.theme_color
         self.redraw()
 
 
 class DuellModeScreen(Screen):
+    top_label = ObjectProperty()
+    back_button = ObjectProperty()
+    small_button = ObjectProperty()
+    medium_button = ObjectProperty()
+    large_button = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.app = None
         self.current_board_size = "small"
         self.current_difficulty = "easy"
         self.theme_color = "color"
@@ -1311,39 +1367,48 @@ class DuellModeScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("duell_mode")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.small_button.text = self.app.translator.gettext("small")
+        self.medium_button.text = self.app.translator.gettext("medium")
+        self.large_button.text = self.app.translator.gettext("large")
 
     def init_new_game(self, mode):
         app = App.get_running_app()
         app.start_new_game(self.current_board_size, mode, self.current_difficulty)
 
     def on_pre_enter(self, *args):
-        app = App.get_running_app()
-        self.theme_color = app.theme_color
+        if not self.app:
+            self.app = App.get_running_app()
+        self.theme_color = self.app.theme_color
         self.redraw()
 
 
 class BattleModeScreen(Screen):
-
-    easy_button = ObjectProperty(None)
+    top_label = ObjectProperty()
+    back_button = ObjectProperty()
+    easy_btn = ObjectProperty(None)
+    medium_btn = ObjectProperty(None)
+    hard_btn = ObjectProperty(None)
+    impossible_btn = ObjectProperty(None)
+    small_button = ObjectProperty(None)
     medium_button = ObjectProperty(None)
-    hard_button = ObjectProperty(None)
-    impossible_button = ObjectProperty(None)
-    small = ObjectProperty(None)
-    medium = ObjectProperty(None)
-    big = ObjectProperty(None)
+    large_button = ObjectProperty(None)
+    start_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         Clock.schedule_once(self.update_diff_buttons, 0.1)
-        self.easy_button.disabled = True
+        self.easy_btn.disabled = True
         self.current_difficulty = "easy"
-        self.small.disabled = True
+        self.small_button.disabled = True
         self.current_board_size = "small"
-        self.button_list = [self.easy_button, self.medium_button, self.hard_button, self.impossible_button, self.small, self.medium, self.big]
+        self.button_list = [self.easy_btn, self.medium_btn, self.hard_btn, self.impossible_btn, self.small_button, self.medium_button, self.large_button]
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
         self.theme = "color"
         self.theme_color = "color"
+        self.app = None
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -1353,64 +1418,76 @@ class BattleModeScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("battle_mode")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.small_button.text = self.app.translator.gettext("small")
+        self.medium_button.text = self.app.translator.gettext("medium")
+        self.large_button.text = self.app.translator.gettext("large")
+        self.easy_btn.text = self.app.translator.gettext("easy")
+        self.medium_btn.text = self.app.translator.gettext("medium")
+        self.hard_btn.text = self.app.translator.gettext("hard")
+        self.impossible_btn.text = self.app.translator.gettext("impossible")
+        self.start_btn.text = self.app.translator.gettext("start_game")
 
     def init_new_game(self, mode):
-        app = App.get_running_app()
-        app.start_new_game(self.current_board_size, mode, self.current_difficulty)
+        if not self.app:
+            self.app = App.get_running_app()
+        self.app.start_new_game(self.current_board_size, mode, self.current_difficulty)
 
     def update_diff_buttons(self, pushed_button=1):
         if pushed_button == 1:
-            self.easy_button.disabled = True
+            self.easy_btn.disabled = True
             self.current_difficulty = "easy"
-            self.medium_button.disabled = False
-            self.hard_button.disabled = False
-            self.impossible_button.disabled = False
+            self.medium_btn.disabled = False
+            self.hard_btn.disabled = False
+            self.impossible_btn.disabled = False
         elif pushed_button == 2:
-            self.easy_button.disabled = False
-            self.medium_button.disabled = True
+            self.easy_btn.disabled = False
+            self.medium_btn.disabled = True
             self.current_difficulty = "medium"
-            self.hard_button.disabled = False
-            self.impossible_button.disabled = False
+            self.hard_btn.disabled = False
+            self.impossible_btn.disabled = False
         elif pushed_button == 3:
-            self.easy_button.disabled = False
-            self.medium_button.disabled = False
-            self.hard_button.disabled = True
+            self.easy_btn.disabled = False
+            self.medium_btn.disabled = False
+            self.hard_btn.disabled = True
             self.current_difficulty = "hard"
-            self.impossible_button.disabled = False
+            self.impossible_btn.disabled = False
         elif pushed_button == 4:
-            self.easy_button.disabled = False
-            self.medium_button.disabled = False
-            self.hard_button.disabled = False
-            self.impossible_button.disabled = True
+            self.easy_btn.disabled = False
+            self.medium_btn.disabled = False
+            self.hard_btn.disabled = False
+            self.impossible_btn.disabled = True
             self.current_difficulty = "impossible"
         for button in self.button_list:
             button.redraw()
 
     def update_board_size_buttons(self, pushed_button=1):
         if pushed_button == 1:
-            self.small.disabled = True
+            self.small_button.disabled = True
             self.current_board_size = "small"
-            self.medium.disabled = False
-            self.big.disabled = False
+            self.medium_button.disabled = False
+            self.large_button.disabled = False
         elif pushed_button == 2:
-            self.small.disabled = False
-            self.medium.disabled = True
+            self.small_button.disabled = False
+            self.medium_button.disabled = True
             self.current_board_size = "medium"
-            self.big.disabled = False
+            self.large_button.disabled = False
         elif pushed_button == 3:
-            self.small.disabled = False
-            self.medium.disabled = False
-            self.big.disabled = True
+            self.small_button.disabled = False
+            self.medium_button.disabled = False
+            self.large_button.disabled = True
             self.current_board_size = "big"
         for button in self.button_list:
             button.redraw()
 
     def on_pre_enter(self, *args):
+        if not self.app:
+            self.app = App.get_running_app()
         settings = load_settings()
         self.theme = settings["theme"]
         self.theme_color = get_theme_color(self.theme)
-        for button in self.button_list:
-            button.change_theme(self.theme_color)
+        self.redraw()
 
 
 class SettingsScreen(Screen):
@@ -1432,6 +1509,11 @@ class SettingsScreen(Screen):
     card_flip_animation_label = ObjectProperty(None)
     card_flip_animation_flip_button = ObjectProperty(None)
     card_flip_animation_zoom_button = ObjectProperty(None)
+    lang_label = ObjectProperty(None)
+    lang_btn_en = ObjectProperty(None)
+    lang_btn_de = ObjectProperty(None)
+    back_button = ObjectProperty()
+    pic_select_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1448,13 +1530,17 @@ class SettingsScreen(Screen):
         self.load_settings()
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
+        self.lang = "en"
 
     def on_pre_enter(self):
+        if not self.app:
+            self.app = App.get_running_app()
         self.load_settings()
         self.change_hide_cards_timeout_label_text()
         self.change_ai_timeout_label_text()
         self.change_touch_delay_label_text()
         self.change_button_states(self.theme, self.game_over_animation)
+        self.redraw()
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -1464,6 +1550,28 @@ class SettingsScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("settings")
+        self.theme_label.text = self.app.translator.gettext("theme")
+        self.light_theme_button.text = self.app.translator.gettext("light")
+        self.dark_theme_button.text = self.app.translator.gettext("dark")
+        self.system_theme_button.text = self.app.translator.gettext("system")
+        self.color_theme_button.text = self.app.translator.gettext("color")
+        self.game_over_animation_label.text = self.app.translator.gettext("game_over_animation_label")
+        self.no_game_over_animation_button.text = self.app.translator.gettext("no_animation")
+        self.free_fall_game_over_animation_button.text = self.app.translator.gettext("free_fall")
+        self.bye_bye_game_over_animation_button.text = self.app.translator.gettext("bye_bye")
+        self.hello_there_game_over_animation_button.text = self.app.translator.gettext("hello_there")
+        self.touch_delay_label.text = self.app.translator.gettext("touch_delay_label")
+        self.ai_timeout_label.text = self.app.translator.gettext("ai_timeout_label")
+        self.hide_cards_timeout_label.text = self.app.translator.gettext("hide_cards_timeout_label")
+        self.card_flip_animation_label.text = self.app.translator.gettext("card_flip_animation_label")
+        self.card_flip_animation_flip_button.text = self.app.translator.gettext("flip_animation_btn")
+        self.card_flip_animation_zoom_button.text = self.app.translator.gettext("zoom_animation_btn")
+        self.lang_label.text = self.app.translator.gettext("language")
+        self.lang_btn_en.text = self.app.translator.gettext("english")
+        self.lang_btn_de.text = self.app.translator.gettext("deutsch")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.pic_select_btn.text = self.app.translator.gettext("pic_select")
 
     def load_settings(self):
         settings = load_settings()
@@ -1479,6 +1587,28 @@ class SettingsScreen(Screen):
         self.touch_delay = settings["touch_delay"]
         self.ai_timeout = settings["ai_timeout"]
         self.hide_cards_timeout = settings["hide_cards_timeout"]
+        self.lang = settings["lang"]
+
+    def update_lang_buttons(self, button_id):
+        if button_id == 0:
+            self.lang_btn_en.disabled = True
+            self.lang_btn_de.disabled = False
+            self.lang = "en"
+            self.app.translator.set_language(self.lang)
+        elif button_id == 1:
+            self.lang_btn_en.disabled = False
+            self.lang_btn_de.disabled = True
+            self.lang = "de"
+            self.app.translator.set_language(self.lang)
+        new_setting = ("lang", self.lang)
+        save_settings(new_setting)
+
+        if self.app is not None:
+            self.app.change_theme_color(self.theme_color)
+        else:
+            self.app = App.get_running_app()
+            self.app.change_theme_color(self.theme_color)
+        self.redraw()
 
     def change_button_states(self, theme, game_over_animation):
         theme_button = 0
@@ -1523,6 +1653,10 @@ class SettingsScreen(Screen):
         elif self.card_flip_animation == "zoom":
             card_flip_button = 1
         self.update_card_flip_animation_buttons(card_flip_button)
+        lang_button = 0
+        if self.lang == "de":
+            lang_button = 1
+        self.update_lang_buttons(lang_button)
 
     def update_theme_buttons(self, button_id):
         if button_id == 0:

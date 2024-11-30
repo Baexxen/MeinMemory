@@ -9,7 +9,8 @@ default_settings = {
     "theme": "color",
     "touch_delay": 10,
     "ai_timeout": 1.2,
-    "hide_cards_timeout": 1.0
+    "hide_cards_timeout": 1.0,
+    "lang": "en"
 }
 
 

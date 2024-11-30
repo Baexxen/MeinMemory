@@ -131,15 +131,17 @@
 
 # Standard-Modus
 <StandardModeScreen>:
+    top_label: top_label
+    back_button: back_button
     small_button: small_button
     medium_button: medium_button
     large_button: large_button
-    back_button: back_button
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            id: top_label
             font_size: app.large_font
             text: "Standard-Modus"
         ButtonBackgroundColor:
@@ -165,115 +167,152 @@
 
 # Zeit-Modus
 <TimeModeScreen>:
+    top_label: top_label
+    back_button: back_button
+    time_race_btn: time_race_btn
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            id: top_label
             font_size: app.large_font
             text: "Zeit-Modi"
         ButtonBackgroundColor:
+            id: time_race_btn
             text: "Zeitrennen"
             on_release:
                 app.root.current = "time_race"
         ButtonBackgroundColor:
+            id:back_button
             text: "Zurück"
             on_release:
                 app.root.current = "main_menu"
 
 # Standard-Zeitmodus (Zeit wird gestoppt, welche der Spieler für das Lösen eines Memory-Spiels benötigt)
 <TimeRaceScreen>:
+    top_label: top_label
+    back_button: back_button
+    small_button: small_button
+    medium_button: medium_button
+    large_button: large_button
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            id: top_label
             font_size: app.large_font
             text: "Zeitrennen"
         ButtonBackgroundColor:
+            id: small_button
             text: "Klein"
             on_release:
                 app.start_new_game("small", "time_race")
         ButtonBackgroundColor:
+            id: medium_button
             text: "Mittel"
             on_release:
                 app.start_new_game("medium", "time_race")
         ButtonBackgroundColor:
+            id: large_button
             text: "Groß"
             on_release:
                 app.start_new_game("big", "time_race")
         ButtonBackgroundColor:
+            id: back_button
             text: "Zurück"
             on_release:
                 app.root.current = "time_mode"
 
 <MultiplayerScreen>:
+    top_label: top_label
+    back_button: back_button
+    duell_btn: duell_btn
+    battle_btn: battle_btn
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            id: top_label
             font_size: app.large_font
             text: "Multiplayer"
         ButtonBackgroundColor:
+            id: duell_btn
             text: "Duell gegen Spieler"
             on_release:
                 app.root.current = "duell_mode"
         ButtonBackgroundColor:
+            id: battle_btn
             text: "Kampf gegen AI"
             on_release:
                 app.root.current = "battle_mode"
         ButtonBackgroundColor:
+            id: back_button
             text: "Zurück"
             on_release:
                 app.root.current = "main_menu"
 
 <DuellModeScreen>:
+    top_label: top_label
+    back_button: back_button
+    small_button: small_button
+    medium_button: medium_button
+    large_button: large_button
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            id: top_label
             font_size: app.large_font
             text: "Duell-Modus"
         ButtonBackgroundColor:
+            id: small_button
             text: "Klein"
             on_release:
                 # app.start_new_game("small", "duell_standard")
                 root.board_size = "small"
                 root.init_new_game("duell_standard")
         ButtonBackgroundColor:
+            id: medium_button
             text: "Mittel"
             on_release:
                 # app.start_new_game("medium", "duell_standard")
                 root.board_size = "medium"
                 root.init_new_game("duell_standard")
         ButtonBackgroundColor:
+            id: large_button
             text: "Groß"
             on_release:
                 # app.start_new_game("big", "duell_standard")
                 root.board_size = "big"
                 root.init_new_game("duell_standard")
         ButtonBackgroundColor:
+            id: back_button
             text: "Zurück"
             on_release:
                 app.root.current = "multiplayer_mode"
 
 # Kampf-Modus
 <BattleModeScreen>:
-    easy_button: easy_button
+    top_label: top_label
+    back_button: back_button
+    easy_btn: easy_btn
+    medium_btn: medium_btn
+    hard_btn: hard_btn
+    impossible_btn: impossible_btn
+    small_button: small_button
     medium_button: medium_button
-    hard_button: hard_button
-    impossible_button: impossible_button
-    small: small
-    medium: medium
-    big: big
-
+    large_button: large_button
+    start_btn: start_btn
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
         spacing: 5
         LabelBackgroundColor:
+            id: top_label
             font_size: app.large_font
             text: "Kampf-Modus"
         ################ Schwierigkeitsgrad der KI ######################################
@@ -284,22 +323,22 @@
             rows: 1
             ButtonBackgroundColor:
                 text: "Leicht"
-                id: easy_button
+                id: easy_btn
                 on_release:
                     root.update_diff_buttons(1)
             ButtonBackgroundColor:
                 text: "Mittel"
-                id: medium_button
+                id: medium_btn
                 on_release:
                     root.update_diff_buttons(2)
             ButtonBackgroundColor:
                 text: "Schwer"
-                id: hard_button
+                id: hard_btn
                 on_release:
                     root.update_diff_buttons(3)
             ButtonBackgroundColor:
                 text: "Unmöglich"
-                id: impossible_button
+                id: impossible_btn
                 on_release:
                     root.update_diff_buttons(4)
         ################ Spielfeldgröße ######################################
@@ -309,17 +348,17 @@
             spacing: 5
             ButtonBackgroundColor:
                 text: "Klein"
-                id: small
+                id: small_button
                 on_release:
                     root.update_board_size_buttons(1)
             ButtonBackgroundColor:
                 text: "Mittel"
-                id: medium
+                id: medium_button
                 on_release:
                     root.update_board_size_buttons(2)
             ButtonBackgroundColor:
                 text: "Groß"
-                id: big
+                id: large_button
                 on_release:
                     root.update_board_size_buttons(3)
 
@@ -328,10 +367,12 @@
             padding: (5, 5, 5, 5)
             spacing: 5
             ButtonBackgroundColor:
+                id: back_button
                 text: "Zurück"
                 on_release:
                     app.root.current = "multiplayer_mode"
             ButtonBackgroundColor:
+                id: start_btn
                 text: "Spiel starten"
                 on_release:
                     root.init_new_game("battle")
@@ -355,6 +396,11 @@
     card_flip_animation_label: card_flip_animation_label
     card_flip_animation_flip_button: card_flip_animation_flip_button
     card_flip_animation_zoom_button: card_flip_animation_zoom_button
+    lang_label: lang_label
+    lang_btn_en: lang_btn_en
+    lang_btn_de: lang_btn_de
+    back_button: back_button
+    pic_select_btn: pic_select_btn
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
@@ -364,9 +410,30 @@
             font_size: app.large_font
             text: "Einstellungen"
         ButtonBackgroundColor:
+            id: pic_select_btn
             text: "Bilder wählen"
             on_release:
                 app.root.current = "pics_select"
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 5
+            LabelBackgroundColor:
+                text: "Language"
+                id: lang_label
+                size_hint: 0.2, 1
+            ButtonBackgroundColor:
+                text: "English"
+                id: lang_btn_en
+                size_hint: 0.2, 1
+                on_release:
+                    root.update_lang_buttons(0)
+            ButtonBackgroundColor:
+                text: "Deutsch"
+                id: lang_btn_de
+                size_hint: 0.2, 1
+                on_release:
+                    root.update_lang_buttons(1)
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
@@ -512,6 +579,7 @@
                     root.decrease_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
         ButtonBackgroundColor:
+            id: back_button
             text: "Zurück"
             on_release:
                 app.root.current = "main_menu"
