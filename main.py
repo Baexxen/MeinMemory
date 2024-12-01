@@ -101,6 +101,7 @@ class MyMemoryApp(App):
         super().__init__(**kwargs)
         self.current_difficulty = "easy"
         self.game_screen = None
+        self.main_menu = None
         self.who_starts_screen = None
         self.pics_list = []
         self.car_images = []
@@ -113,7 +114,8 @@ class MyMemoryApp(App):
         self.theme_color = "color"
         self.button_list = []
         self.label_list = []
-        self.translator = Translator(lang="en")  # Standardsprache ist Englisch
+        self.lang = "en"
+        self.translator = Translator(lang=self.lang)  # Standardsprache ist Englisch
 
     def build(self):
         # Transitions: NoTransition, FadeTransition, SwapTransition, WipeTransition, CardTransition, SlideTransition, ShaderTransition, RiseInTransition, FallOutTransition, TransitionBase
@@ -137,11 +139,12 @@ class MyMemoryApp(App):
     def on_start(self):
         logging.debug("App started")
         self.icon = "pics/icon.ico"
-        self.root.current = "main_menu"
-        Clock.schedule_once(self.force_redraw, 0.1)  # Eventuell eine leichte Verzögerung hinzufügen
+        # self.root.current = "main_menu"
+        # Clock.schedule_once(self.force_redraw, 0.1)  # Eventuell eine leichte Verzögerung hinzufügen
         self.game_screen = self.root.get_screen("game")
+        self.main_menu = self.root.get_screen("main_menu")
         self.load_pictures()
-        Clock.schedule_once(self.load_settings, .2)
+        Clock.schedule_once(self.load_settings, 0.2)
         self.who_starts_screen = self.root.get_screen("who_starts")
 
     def start_new_game(self, board_size="small", game_mode="standard", difficulty="easy"):
@@ -198,6 +201,10 @@ class MyMemoryApp(App):
             button.change_theme(self.theme_color)
         for label in self.label_list:
             label.change_theme(self.theme_color)
+        self.lang = settings["lang"]
+        self.translator = Translator(lang=self.lang)
+        self.main_menu.redraw()
+        self.root.current = "main_menu"
 
     def load_active_pics_lists(self):
         self.pics_list.clear()
@@ -682,6 +689,8 @@ class GameScreen(Screen):
     scatter_layout = ObjectProperty(None)
     bottom_layout = ObjectProperty(None)
     game_over_label = ObjectProperty(None)
+    menu_btn = ObjectProperty()
+    restart_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
@@ -738,17 +747,17 @@ class GameScreen(Screen):
             self.get_who_starts_screen()
         if self.current_game_mode == "standard":
             self.top_label.font_size = FONT_SIZE_LARGE
-            self.change_top_label_text(f"Einzelspieler")
+            self.top_label.text = self.app.translator.gettext("single_player")
             self.current_difficulty = "easy"
         elif self.current_game_mode == "battle":
-            self.change_top_label_text(f"Spiel gegen {self.ai.name}\nAktueller Spieler: {self.current_player.name}.")
+            self.top_label.text = self.app.translator.gettext("battle_mode_top_label_start").format(ai_name=self.ai.name, current_player_name=self.current_player.name)
             self.who_starts_screen.init_settings(self.current_game_mode, self.current_difficulty, self.board_size)
             self.app.root.current = "who_starts"
         elif self.current_game_mode == "time_race":
-            self.change_top_label_text("Zeitrennen")
+            self.top_label.text = self.app.translator.gettext("time_race")
             self.current_difficulty = "easy"
         elif self.current_game_mode == "duell_standard":
-            self.change_top_label_text(f"Duell\nAktueller Spieler: {self.current_player.name}")
+            self.top_label.text = self.app.translator.gettext("duell_mode_top_label_start").format(current_player_name=self.current_player.name)
             self.who_starts_screen.init_settings(self.current_game_mode, self.current_difficulty, self.board_size)
             self.app.root.current = "who_starts"
 
@@ -786,19 +795,20 @@ class GameScreen(Screen):
         self.stop_time_count_up()
         self.update_card_pos_and_size()
         self.reset_widgets()
-        self.game_over_label.hide = True
-        self.game_over_label.font_size = FONT_SIZE_LARGE
         if self.current_game_mode != "duell_standard":
             highscores = load_best_scores()
             current_game = f"{self.current_game_mode}_{self.current_difficulty}_{self.board_size}"
             self.current_highscore = highscores[current_game]
             self.update_time_display()
-
         self.player.reset()
         self.player2.reset()
         self.ai.reset()
         self.current_player = self.player
         self.update()
+        self.game_over_label.blend_out = True
+        self.game_over_label.hide = True
+        self.game_over_label.opacity = 0
+        self.game_over_label.font_size = FONT_SIZE_LARGE
 
     def update(self):
         print("GameScreen: update")
@@ -825,7 +835,7 @@ class GameScreen(Screen):
         if count_found_cards == len(self.card_list) and not self.game_over:
             self.game_over = True
             self.game_running = False
-            self.top_label.text = "Game Over"
+            self.top_label.text = self.app.translator.gettext("game_over")
 
         if self.game_over:
             score = 0
@@ -849,12 +859,12 @@ class GameScreen(Screen):
             if highscore_valid:
                 highscore = update_best_scores(self.current_game_mode, self.current_difficulty, self.board_size, score)
                 if highscore:
-                    self.change_top_label_text("Neuer Highscore =)")
+                    self.top_label.text = self.app.translator.gettext("new_highscore").format(player_score=self.player.score)
                     self.current_highscore = score
                     if self.current_game_mode != "time_race":
-                        self.game_over_label.text = f"Neuer Highscore =)\nPunkte: {score}"
+                        self.game_over_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
                     else:
-                        self.game_over_label.text = f"Neuer Highscore =)\nBenötigte Zeit: {score} Sekunden"
+                        self.game_over_label.text = self.app.translator.gettext("new_highscore_time_race").format(elapsed_time=score)
                     self.game_over_label.hide = False
                     self.game_over_label.opacity = 1
                     self.game_over_label.redraw()
@@ -862,17 +872,17 @@ class GameScreen(Screen):
                 else:
                     if self.current_game_mode == "duell_standard":
                         if self.player.score > self.player2.score:
-                            self.change_top_label_text("Spieler_1 hat gewonnen :-)")
-                            game_over_label_text = f"{self.player.name} hat gewonnen :-)"
+                            self.top_label.text = self.app.translator.gettext("victory_player_1").format(player_1_name=self.player.name)
+                            game_over_label_text = self.app.translator.gettext("victory_player_1").format(player_1_name=self.player.name)
                         elif self.player.score == self.player2.score:
-                            self.change_top_label_text("Unentschieden :-O")
-                            game_over_label_text = "Unentschieden :-O"
+                            self.top_label.text = self.app.translator.gettext("draw")
+                            game_over_label_text = self.app.translator.gettext("draw")
                         else:
-                            self.change_top_label_text("Spieler_2 hat gewonnen :-)")
-                            game_over_label_text = f"{self.player2.name} hat gewonnen :-)"
+                            self.top_label.text = self.app.translator.gettext("victory_player_2").format(player_2_name=self.player2.name)
+                            game_over_label_text = self.app.translator.gettext("victory_player_2").format(player_2_name=self.player2.name)
                     else:
-                        self.change_top_label_text("Keine neue Bestleistung... Vielleicht nächstes Mal ;-)")
-                        game_over_label_text = "Keine neue Bestleistung... Vielleicht nächstes Mal ;-)"
+                        self.top_label.text = self.app.translator.gettext("no_new_highscore")
+                        game_over_label_text = self.app.translator.gettext("no_new_highscore")
 
                     self.game_over_label.text = game_over_label_text
                     self.game_over_label.hide = False
@@ -886,15 +896,18 @@ class GameScreen(Screen):
             self.time_race_running = False
 
         if self.current_game_mode == "standard":
-            self.bottom_label.text = f"Runde: {self.player.turns}\nRekord: {self.current_highscore}"
+            self.bottom_label.text = self.app.translator.gettext("bottom_standard").format(player_turns=self.player.turns, current_highscore=self.current_highscore)
 
         elif self.current_game_mode == "duell_standard":
-            self.bottom_label.text = f"Runde: {self.player.turns}\n{self.player.name}: {self.player.score}\n{self.player2.name}: {self.player2.score}"
+            self.bottom_label.text = self.app.translator.gettext("bottom_duell").format(player_turns=self.player.turns, player_name=self.player.name, player_score=self.player.score,
+                                                                                        player_2_name=self.player2.name, player_2_score=self.player2.score)
         elif self.current_game_mode == "battle":
-            self.bottom_label.text = f"Punkte: {self.player.score}\nRekord: {self.current_highscore}"
+            self.bottom_label.text = self.app.translator.gettext("bottom_battle").format(player_score=self.player.score, current_highscore=self.current_highscore)
 
         elif self.current_game_mode == "time_race":
             pass
+        self.menu_btn.text = self.app.translator.gettext("menu")
+        self.restart_btn.text = self.app.translator.gettext("restart")
 
     def update_card_pos_and_size(self):
         # Fenstergröße und Kartenanzahl ermitteln
@@ -1025,7 +1038,7 @@ class GameScreen(Screen):
                 self.current_player = self.player2
             else:
                 self.current_player = self.player
-        self.change_top_label_text(f"Aktueller Spieler ist {self.current_player.name}")
+        self.top_label.text = self.app.translator.gettext("current_player").format(current_player_name=self.current_player.name)
 
     def ai_turn(self, players_last_cards):
         first_card = self.ai.select_first_card(players_last_cards)
@@ -1053,9 +1066,6 @@ class GameScreen(Screen):
         else:
             return False
 
-    def change_top_label_text(self, text):
-        self.top_label.text = text
-
     def reset_widgets(self):
         self.active_touches.clear()
         self.scatter.transformed = False
@@ -1075,12 +1085,7 @@ class GameScreen(Screen):
         Clock.unschedule(self.update_time)
 
     def update_time_display(self):
-        if self.board_size == "small":
-            self.bottom_label.text = f"Zeit: {self.elapsed_time}\nRekord: {self.current_highscore}"
-        elif self.board_size == "medium":
-            self.bottom_label.text = f"Zeit: {self.elapsed_time}\nRekord: {self.current_highscore}"
-        elif self.board_size == "big":
-            self.bottom_label.text = f"Zeit: {self.elapsed_time}\nRekord: {self.current_highscore}"
+        self.bottom_label.text = self.app.translator.gettext("bottom_time_race").format(elapsed_time=self.elapsed_time, current_highscore=self.current_highscore)
 
     def load_settings(self):
         settings = load_settings()
@@ -1561,9 +1566,9 @@ class SettingsScreen(Screen):
         self.free_fall_game_over_animation_button.text = self.app.translator.gettext("free_fall")
         self.bye_bye_game_over_animation_button.text = self.app.translator.gettext("bye_bye")
         self.hello_there_game_over_animation_button.text = self.app.translator.gettext("hello_there")
-        self.touch_delay_label.text = self.app.translator.gettext("touch_delay_label")
-        self.ai_timeout_label.text = self.app.translator.gettext("ai_timeout_label")
-        self.hide_cards_timeout_label.text = self.app.translator.gettext("hide_cards_timeout_label")
+        self.touch_delay_label.text = self.app.translator.gettext("touch_delay_label").format(touch_delay=self.touch_delay)
+        self.ai_timeout_label.text = self.app.translator.gettext("ai_timeout_label").format(ai_timeout=self.ai_timeout)
+        self.hide_cards_timeout_label.text = self.app.translator.gettext("hide_cards_timeout_label").format(hide_cards_timeout=self.hide_cards_timeout)
         self.card_flip_animation_label.text = self.app.translator.gettext("card_flip_animation_label")
         self.card_flip_animation_flip_button.text = self.app.translator.gettext("flip_animation_btn")
         self.card_flip_animation_zoom_button.text = self.app.translator.gettext("zoom_animation_btn")
@@ -1762,7 +1767,7 @@ class SettingsScreen(Screen):
             self.app.change_theme_color(self.theme_color)
 
     def change_touch_delay_label_text(self):
-        self.touch_delay_label.text = f"Touch-Delay: {self.touch_delay} (Standard = 10)\nTrägheit der 'Touch-Erkennung'"
+        self.touch_delay_label.text = self.app.translator.gettext("touch_delay_label").format(touch_delay=self.touch_delay)
 
     def increase_touch_delay(self):
         self.touch_delay += 1
@@ -1776,7 +1781,7 @@ class SettingsScreen(Screen):
             save_settings(new_setting)
 
     def change_ai_timeout_label_text(self):
-        self.ai_timeout_label.text = f"KI-Verzögerung: {self.ai_timeout} (Standard = 1.2)\n(Muss größer sein als 'Karten verdecken')\nDauer für Aktionen der KI"
+        self.ai_timeout_label.text = self.app.translator.gettext("ai_timeout_label").format(ai_timeout=self.ai_timeout)
 
     def increase_ai_timeout(self):
         self.ai_timeout += 0.1  # Verzögerung der AI-Aktionen (Aufdecken von Karten)
@@ -1792,7 +1797,7 @@ class SettingsScreen(Screen):
             save_settings(new_setting)
 
     def change_hide_cards_timeout_label_text(self):
-        self.hide_cards_timeout_label.text = f"Karten verdecken: {self.hide_cards_timeout} (Standard = 1.0)\n(Muss kleiner sein als 'AI-Timeout')"
+        self.hide_cards_timeout_label.text = self.app.translator.gettext("hide_cards_timeout_label").format(hide_cards_timeout=self.hide_cards_timeout)
 
     def increase_hide_cards_timeout(self):
         if self.hide_cards_timeout < self.ai_timeout - 0.1:  # Verzögerung vom Verdecken falsch aufgedeckter Karten
@@ -1810,7 +1815,8 @@ class SettingsScreen(Screen):
 
 
 class PicsSelectScreen(Screen):
-
+    top_label = ObjectProperty()
+    back_button = ObjectProperty()
     akira_label = ObjectProperty()
     akira_box = ObjectProperty()
     cars_label = ObjectProperty()
@@ -1826,7 +1832,7 @@ class PicsSelectScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.app = None
         self.akira_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.cars_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.bundesliga_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
@@ -1846,6 +1852,14 @@ class PicsSelectScreen(Screen):
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("pic_select")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.akira_label.text = self.app.translator.gettext("akira_label")
+        self.cars_label.text = self.app.translator.gettext("cars_label")
+        self.bundesliga_label.text = self.app.translator.gettext("bundesliga_label")
+        self.own_landscapes_label.text = self.app.translator.gettext("own_landscapes_label")
+        self.sexy_label.text = self.app.translator.gettext("sexy_label")
+        self.random_label.text = self.app.translator.gettext("random_label")
 
     def save_pics_lists(self):
         pics_selected = 0
@@ -1902,6 +1916,8 @@ class PicsSelectScreen(Screen):
                 box.background_checkbox_down = "gfx/misc/checkbox_checked_dark.png"
 
     def on_pre_enter(self, *args):
+        if not self.app:
+            self.app = App.get_running_app()
         self.load_checkbox_statuses()
         settings = load_settings()
         theme = settings["theme"]
@@ -1912,6 +1928,7 @@ class PicsSelectScreen(Screen):
 
 class WhoStartsScreen(Screen):
     top_label = ObjectProperty(None)
+    back_button = ObjectProperty()
     head_button = ObjectProperty(None)
     tail_button = ObjectProperty(None)
     coin = ObjectProperty(None)
@@ -1937,13 +1954,18 @@ class WhoStartsScreen(Screen):
         self.rect.size = self.size
 
     def on_pre_enter(self, *args):
+        if not self.app:
+            self.app = App.get_running_app()
         self.redraw()
 
     def redraw(self):
-        print(f"WhoStartsScreen: redraw")
         with self.canvas.before:
             Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.top_label.text = self.app.translator.gettext("who_starts_label")
+        self.back_button.text = self.app.translator.gettext("back")
+        self.head_button.text = self.app.translator.gettext("heads")
+        self.tail_button.text = self.app.translator.gettext("tails")
 
     def init_settings(self, mode, difficulty, board_size):
         self.current_board_size = board_size
