@@ -53,10 +53,11 @@
     "sexy_label": "Sexy Women",
     "random_label": "Random Stuff",
 
-    "_comment_Seitenwahl": "Seitenwahl",
+    "_comment_WhoStarts": "WhoStarts",
     "who_starts_label": "Who starts? Pick 'Heads' or 'Tails'.",
     "heads": "Heads",
     "tails": "Tails",
+    "who_starts_start_message": "{current_player} begins. :)",
 
     "_comment_GameScreen_top_label": "TopLabel",
     "game_over": "Game Over",
@@ -79,5 +80,9 @@
 
     "_comment_GameScreen_buttons": "Buttons",
     "menu": "Menu",
-    "restart": "Restart"
+    "restart": "Restart",
+
+    "_comment_GameScreen_Players": "Players",
+    "player_1_name": "Player_1",
+    "player_2_name": "Player_2"
 }

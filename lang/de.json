@@ -53,10 +53,11 @@
     "sexy_label": "Sexy Frauen",
     "random_label": "Zufälliges Zeug",
 
-    "_comment_Seitenwahl": "Seitenwahl",
+    "_comment_WhoStarts": "WhoStarts",
     "who_starts_label": "Wer beginnt? Wähle 'Kopf' oder 'Zahl'.",
     "heads": "Kopf",
     "tails": "Zahl",
+    "who_starts_start_message": "{current_player} beginnt. :)",
 
     "_comment_GameScreen_top_label": "TopLabel",
     "game_over": "Spielende",
@@ -79,5 +80,9 @@
 
     "_comment_GameScreen_buttons": "Buttons",
     "menu": "Menü",
-    "restart": "Neustart"
+    "restart": "Neustart",
+
+    "_comment_GameScreen_Players": "Players",
+    "player_1_name": "Spieler_1",
+    "player_2_name": "Spieler_2"
 }

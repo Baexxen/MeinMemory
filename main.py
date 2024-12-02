@@ -275,6 +275,7 @@ class Player:
         self.name = name
         self.score = 0
         self.turns = 0
+        self.app = None
 
     def increase_score(self, points):
         self.score += points
@@ -285,6 +286,12 @@ class Player:
     def reset(self):
         self.score = 0
         self.turns = 0
+        if not self.app:
+            self.app = App.get_running_app()
+        if self.name == "Spieler_1":
+            self.name = self.app.translator.gettext("player_1_name")
+        elif self.name == "Spieler_2":
+            self.name = self.app.translator.gettext("player_2_name")
 
 
 class AI(Player):
@@ -307,6 +314,7 @@ class AI(Player):
 
     def select_first_card(self, players_last_cards):
         print(f"KI {self.difficulty} sucht erste Karte")
+        self.error = False
         self.players_last_cards = players_last_cards
         first_card = None
         self.active_cards = self.game_screen.card_list.copy()
@@ -333,7 +341,7 @@ class AI(Player):
                 elif self.difficulty == "hard" or self.difficulty == "impossible":
                     shuffle(self.active_cards)
                     for card in self.active_cards:
-                        if not card.disabled and not card.flipped:
+                        if not card.disabled:
                             if card not in self.known_cards:  # Bevorzugt eine Karte aufdecken, die noch nicht vorher aufgedeckt wurde.
                                 first_card = card
                                 break
@@ -341,6 +349,7 @@ class AI(Player):
                         first_card = self.find_any_card()
 
         if first_card:
+            self.remember_card(first_card)
             return first_card
         else:
             print("'first_card' nicht gefunden.")
@@ -348,6 +357,7 @@ class AI(Player):
 
     def select_second_card(self, first_card):
         print(f"KI sucht zweite Karte")
+        self.error = False
         second_card = None
         self.active_cards = self.game_screen.card_list.copy()
         self.error = self.do_error()
@@ -378,6 +388,7 @@ class AI(Player):
 
         if not self.error:
             if second_card:
+                self.remember_card(second_card)
                 return second_card
             else:
                 print("'second_card' nicht gefunden.")
@@ -385,6 +396,7 @@ class AI(Player):
         else:
             second_card = self.find_wrong_card_nearby(first_card, second_card)  # Wenn ein Fehler gemacht werden soll, wird eine falsche Karte in der Nähe der eigentlich richtigen Karte gesucht.
             if second_card:
+                self.remember_card(second_card)
                 return second_card
             else:
                 print("'second_card' nicht gefunden.")
@@ -506,9 +518,11 @@ class AI(Player):
         shuffle(self.active_cards)
         for card in self.active_cards:  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist und nicht zuletzt vom Spieler aufgedeckt wurde.
             if not card.disabled and not card.flipped and card not in self.players_last_cards:
+                self.remember_card(card)
                 return card
         for card in self.active_cards:  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist.
             if not card.disabled and not card.flipped:
+                self.remember_card(card)
                 return card
         return None
 
@@ -695,8 +709,8 @@ class GameScreen(Screen):
     def __init__(self, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
         self.size = Window.size
-        self.player = Player("Spieler 1")
-        self.player2 = Player("Spieler 2")
+        self.player = Player("Spieler_1")
+        self.player2 = Player("Spieler_2")
         self.ai = AI("KI Sepp", difficulty="easy")
         self.current_player = self.player
         self.card_list = []
@@ -1985,7 +1999,7 @@ class WhoStartsScreen(Screen):
                 second_card = self.game_screen.card_list[2]
                 players_last_cards = (first_card, second_card)
                 Clock.schedule_once(lambda dt: self.game_screen.ai_turn(players_last_cards), self.game_screen.ai_timeout + 2)
-        self.top_label.text = f"{self.game_screen.current_player.name} beginnt das Spiel :)"
+        self.top_label.text = self.app.translator.gettext("who_starts_start_message").format(current_player=self.game_screen.current_player.name)
         Clock.schedule_once(lambda dt: self.switch_to_game(), 1.5)
 
     def switch_to_game(self):
