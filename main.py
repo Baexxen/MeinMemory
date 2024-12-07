@@ -543,7 +543,7 @@ class AI(Player):
         self.known_cards.clear()
         self.game_screen = self.app.root.get_screen("game")
         self.difficulty = self.game_screen.current_difficulty
-        self.name = {"easy": "Sepp", "medium": "Maja", "hard": "Juniper", "impossible": "Jasmin"}[self.difficulty]
+        self.name = {"easy": "Sepp", "medium": "Guido", "hard": "Juniper", "impossible": "Jasmin"}[self.difficulty]
         self.base_error_probability = {"easy": 35, "medium": 15, "hard": 5, "impossible": 0}[self.difficulty]
         self.save_call_threshold = {"easy": 3, "medium": 2, "hard": 1, "impossible": 0}[self.difficulty]
         self.active_cards.clear()
@@ -717,7 +717,7 @@ class GameScreen(Screen):
         self.size = Window.size
         self.player = Player("Spieler_1")
         self.player2 = Player("Spieler_2")
-        self.ai = AI("KI Sepp", difficulty="easy")
+        self.ai = AI("Sepp", difficulty="easy")
         self.current_player = self.player
         self.card_list = []
         self.active_touches = set()
