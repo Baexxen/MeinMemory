@@ -4,6 +4,8 @@
     "small": "Klein",
     "medium": "Mittel",
     "large": "Groß",
+    "exit": "Beenden",
+    "reset": "Reset",
 
     "_comment_Main_Menu": "Hauptmenü",
     "main_menu": "Hauptmenü",
@@ -12,7 +14,6 @@
     "time_mode": "Zeit-Modus",
     "multiplayer_mode": "Multiplayer",
     "settings": "Einstellungen",
-    "exit": "Beenden",
 
     "_comment_Time-Mode": "Time-Mode",
     "time_race": "Zeitrennen",

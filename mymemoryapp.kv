@@ -400,6 +400,7 @@
     lang_btn_de: lang_btn_de
     back_button: back_button
     pic_select_btn: pic_select_btn
+    reset_btn: reset_btn
     BoxLayout:
         orientation: "vertical"
         padding: (5, 5, 5, 5)
@@ -577,11 +578,21 @@
                 on_release:
                     root.decrease_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
-        ButtonBackgroundColor:
-            id: back_button
-            text: "Zurück"
-            on_release:
-                app.root.current = "main_menu"
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 5
+            ButtonBackgroundColor:
+                id: back_button
+                text: "Zurück"
+                on_release:
+                    app.root.current = "main_menu"
+            ButtonBackgroundColor:
+                id: reset_btn
+                text: "Reset"
+                size_hint: 0.2, 1.0
+                on_release:
+                    root.reset_settings()
 
 # Auswahlbildschirm für Bilder
 <PicsSelectScreen>:
@@ -599,6 +610,7 @@
     sexy_box: sexy_box
     random_label: random_label
     random_box: random_box
+    reset_btn: reset_btn
 
     BoxLayout:
         orientation: "vertical"
@@ -705,11 +717,21 @@
                 background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
                 on_release:
                     root.save_pics_lists()
-        ButtonBackgroundColor:
-            id: back_button
-            text: "Zurück"
-            on_release:
-                app.root.current = "settings"
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 5
+            ButtonBackgroundColor:
+                id: back_button
+                text: "Zurück"
+                on_release:
+                    app.root.current = "settings"
+            ButtonBackgroundColor:
+                id: reset_btn
+                text: "Reset"
+                size_hint: 0.2, 1.0
+                on_release:
+                    root.reset_settings()
 
 # Bildschirm zur Auswahl des 'Beginners'
 <WhoStartsScreen>:

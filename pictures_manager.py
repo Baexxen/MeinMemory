@@ -66,5 +66,4 @@ def load_pics_lists():
 
 
 def reset_selected_pics_lists():
-    for pic_list in default_pics:
-        save_pics_lists(pic_list, "down")
+    return default_pics

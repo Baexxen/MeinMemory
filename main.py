@@ -19,6 +19,7 @@ from jnius import autoclass
 import os
 import logging
 import time
+import locale
 
 # Translator
 from translator import Translator
@@ -27,7 +28,7 @@ from translator import Translator
 from score_manager import load_best_scores, save_best_scores, update_best_scores
 
 # Settings
-from settings_manager import save_settings, load_settings, reset_settings
+from settings_manager import save_settings, load_settings, reset_settings, get_system_language
 
 # Bilderlisten
 from pictures_manager import save_pics_lists, load_pics_lists, reset_selected_pics_lists
@@ -114,7 +115,12 @@ class MyMemoryApp(App):
         self.theme_color = "color"
         self.button_list = []
         self.label_list = []
-        self.lang = "en"
+        self.sys_lang = get_system_language()
+        supported_languages = ["en", "de"]
+        if self.sys_lang in supported_languages:
+            self.lang = self.sys_lang
+        else:
+            self.lang = "en"
         self.translator = Translator(lang=self.lang)  # Standardsprache ist Englisch
 
     def build(self):
@@ -1533,6 +1539,7 @@ class SettingsScreen(Screen):
     lang_btn_de = ObjectProperty(None)
     back_button = ObjectProperty()
     pic_select_btn = ObjectProperty()
+    reset_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1591,6 +1598,7 @@ class SettingsScreen(Screen):
         self.lang_btn_de.text = self.app.translator.gettext("deutsch")
         self.back_button.text = self.app.translator.gettext("back")
         self.pic_select_btn.text = self.app.translator.gettext("pic_select")
+        self.reset_btn.text = self.app.translator.gettext("reset")
 
     def load_settings(self):
         settings = load_settings()
@@ -1827,6 +1835,23 @@ class SettingsScreen(Screen):
             new_setting = ("hide_cards_timeout", self.hide_cards_timeout)
             save_settings(new_setting)
 
+    def reset_settings(self):
+        settings = reset_settings()  # load default settings
+        self.theme = settings["theme"]
+        self.theme_color = get_theme_color(self.theme)
+        if self.app is not None:
+            self.app.change_theme_color(self.theme_color)
+        else:
+            self.app = App.get_running_app()
+            self.app.change_theme_color(self.theme_color)
+        self.card_flip_animation = settings["card_flip_animation"]
+        self.game_over_animation = settings["game_over_animation"]
+        self.touch_delay = settings["touch_delay"]
+        self.ai_timeout = settings["ai_timeout"]
+        self.hide_cards_timeout = settings["hide_cards_timeout"]
+        self.lang = settings["lang"]
+        self.on_pre_enter()
+
 
 class PicsSelectScreen(Screen):
     top_label = ObjectProperty()
@@ -1843,6 +1868,7 @@ class PicsSelectScreen(Screen):
     sexy_box = ObjectProperty()
     random_label = ObjectProperty()
     random_box = ObjectProperty()
+    reset_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1937,6 +1963,17 @@ class PicsSelectScreen(Screen):
         theme = settings["theme"]
         self.theme_color = get_theme_color(theme)
         self.update_checkbox_theme()
+        self.redraw()
+
+    def reset_settings(self):
+        checkboxes = reset_selected_pics_lists()  # Load Default Settings
+        self.akira_box.state = checkboxes["akira_images"]
+        self.cars_box.state = checkboxes["car_images"]
+        self.bundesliga_box.state = checkboxes["bundesliga_images"]
+        self.own_landscapes_box.state = checkboxes["own_landscape_images"]
+        self.sexy_box.state = checkboxes["sexy_images"]
+        self.random_box.state = checkboxes["random_images"]
+        self.save_pics_lists()
         self.redraw()
 
 

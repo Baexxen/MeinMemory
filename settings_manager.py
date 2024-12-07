@@ -1,6 +1,29 @@
 from kivy.app import App
+from kivy.utils import platform
 import os
 import json
+import locale
+from jnius import autoclass
+import sys
+
+
+def get_system_language():
+    if platform == "android":
+        auto_lang_func = autoclass("java.util.Locale")
+        auto_language = auto_lang_func.getDefault().getLanguage()
+        return auto_language
+    else:
+        auto_language = locale.getdefaultlocale()[0][:2]
+        return auto_language
+
+
+auto_lang = get_system_language()
+supported_languages = ["en", "de"]
+if auto_lang in supported_languages:
+    system_lang = auto_lang
+else:
+    system_lang = "en"
+print(f"SETTINGS SYS_LANG: {system_lang}")
 
 # Standardwerte für die Einstellungen
 default_settings = {
@@ -10,7 +33,7 @@ default_settings = {
     "touch_delay": 10,
     "ai_timeout": 1.2,
     "hide_cards_timeout": 1.0,
-    "lang": "en"
+    "lang": system_lang
 }
 
 
