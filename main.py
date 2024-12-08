@@ -107,10 +107,11 @@ class MyMemoryApp(App):
         self.pics_list = []
         self.car_images = []
         self.akira_images = []
-        self.bundesliga_images = []
+        self.sport_images = []
         self.own_landscape_images = []
         self.sexy_images = []
         self.random_images = []
+        self.nature_images = []
         self.theme = "color"
         self.theme_color = "color"
         self.button_list = []
@@ -222,8 +223,8 @@ class MyMemoryApp(App):
         if all_pics_lists["car_images"] == "down":
             self.pics_list.extend(self.car_images)
             lists_selected += 1
-        if all_pics_lists["bundesliga_images"] == "down":
-            self.pics_list.extend(self.bundesliga_images)
+        if all_pics_lists["sport_images"] == "down":
+            self.pics_list.extend(self.sport_images)
             lists_selected += 1
         if all_pics_lists["own_landscape_images"] == "down":
             self.pics_list.extend(self.own_landscape_images)
@@ -234,25 +235,46 @@ class MyMemoryApp(App):
         if all_pics_lists["random_images"] == "down":
             self.pics_list.extend(self.random_images)
             lists_selected += 1
+        if all_pics_lists["nature_images"] == "down":
+            self.pics_list.extend(self.nature_images)
+            lists_selected += 1
 
         if lists_selected == 0:
-            reset_selected_pics_lists()
-            self.pics_list.clear()
-            self.pics_list.extend(self.akira_images)
-            self.pics_list.extend(self.car_images)
-            self.pics_list.extend(self.bundesliga_images)
-            self.pics_list.extend(self.own_landscape_images)
-            self.pics_list.extend(self.sexy_images)
-            self.pics_list.extend(self.random_images)
+            all_pics_lists = reset_selected_pics_lists()
+            if all_pics_lists["akira_images"] == "down":
+                self.pics_list.extend(self.akira_images)
+                lists_selected += 1
+            if all_pics_lists["car_images"] == "down":
+                self.pics_list.extend(self.car_images)
+                lists_selected += 1
+            if all_pics_lists["sport_images"] == "down":
+                self.pics_list.extend(self.sport_images)
+                lists_selected += 1
+            if all_pics_lists["own_landscape_images"] == "down":
+                self.pics_list.extend(self.own_landscape_images)
+                lists_selected += 1
+            if all_pics_lists["sexy_images"] == "down":
+                self.pics_list.extend(self.sexy_images)
+                lists_selected += 1
+            if all_pics_lists["random_images"] == "down":
+                self.pics_list.extend(self.random_images)
+                lists_selected += 1
+            if all_pics_lists["nature_images"] == "down":
+                self.pics_list.extend(self.nature_images)
+                lists_selected += 1
+
+            if lists_selected == 0:
+                self.exit_app()
 
     def load_pictures(self):
         paths = {
             "pics/Akira": self.akira_images,
             "pics/Autos": self.car_images,
-            "pics/Bundesliga": self.bundesliga_images,
+            "pics/Sport": self.sport_images,
             "pics/EigeneLandschaften": self.own_landscape_images,
             "pics/Sexy": self.sexy_images,
             "pics/Verschiedenes": self.random_images,
+            "pics/Natur": self.nature_images
         }
 
         for path, image_list in paths.items():
@@ -1860,14 +1882,16 @@ class PicsSelectScreen(Screen):
     akira_box = ObjectProperty()
     cars_label = ObjectProperty()
     cars_box = ObjectProperty()
-    bundesliga_label = ObjectProperty()
-    bundesliga_box = ObjectProperty()
+    sport_label = ObjectProperty()
+    sport_box = ObjectProperty()
     own_landscapes_label = ObjectProperty()
     own_landscapes_box = ObjectProperty()
     sexy_label = ObjectProperty()
     sexy_box = ObjectProperty()
     random_label = ObjectProperty()
     random_box = ObjectProperty()
+    nature_label = ObjectProperty()
+    nature_box = ObjectProperty()
     reset_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
@@ -1875,11 +1899,12 @@ class PicsSelectScreen(Screen):
         self.app = None
         self.akira_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.cars_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.bundesliga_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.sport_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.own_landscapes_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.sexy_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.random_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.checkbox_list = [self.akira_box, self.cars_box, self.bundesliga_box, self.own_landscapes_box, self.sexy_box, self.random_box]
+        self.nature_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
+        self.checkbox_list = [self.akira_box, self.cars_box, self.sport_box, self.own_landscapes_box, self.sexy_box, self.random_box, self.nature_box]
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -1896,18 +1921,20 @@ class PicsSelectScreen(Screen):
         self.back_button.text = self.app.translator.gettext("back")
         self.akira_label.text = self.app.translator.gettext("akira_label")
         self.cars_label.text = self.app.translator.gettext("cars_label")
-        self.bundesliga_label.text = self.app.translator.gettext("bundesliga_label")
+        self.sport_label.text = self.app.translator.gettext("sport_label")
         self.own_landscapes_label.text = self.app.translator.gettext("own_landscapes_label")
         self.sexy_label.text = self.app.translator.gettext("sexy_label")
         self.random_label.text = self.app.translator.gettext("random_label")
+        self.nature_label.text = self.app.translator.gettext("nature_label")
 
-    def save_pics_lists(self):
+    def save_pics_lists_screen(self):
+        print("Save Pics Lists")
         pics_selected = 0
         if self.akira_box.state == "down":
             pics_selected += 1
         if self.cars_box.state == "down":
             pics_selected += 1
-        if self.bundesliga_box.state == "down":
+        if self.sport_box.state == "down":
             pics_selected += 1
         if self.own_landscapes_box.state == "down":
             pics_selected += 1
@@ -1915,33 +1942,37 @@ class PicsSelectScreen(Screen):
             pics_selected += 1
         if self.random_box.state == "down":
             pics_selected += 1
+        if self.nature_box.state == "down":
+            pics_selected += 1
 
         if pics_selected > 0:
-            save_pics_lists("akira_images", self.akira_box.state)
-            save_pics_lists("car_images", self.cars_box.state)
-            save_pics_lists("bundesliga_images", self.bundesliga_box.state)
-            save_pics_lists("own_landscape_images", self.own_landscapes_box.state)
-            save_pics_lists("sexy_images", self.sexy_box.state)
-            save_pics_lists("random_images", self.random_box.state)
-        else:
-            self.akira_box.state = "down"
-            save_pics_lists("akira_images", self.akira_box.state)
-            save_pics_lists("car_images", self.cars_box.state)
-            save_pics_lists("bundesliga_images", self.bundesliga_box.state)
-            save_pics_lists("own_landscape_images", self.own_landscapes_box.state)
-            save_pics_lists("sexy_images", self.sexy_box.state)
-            save_pics_lists("random_images", self.random_box.state)
+            checkboxes = {
+                "akira_images": self.akira_box.state,
+                "car_images": self.cars_box.state,
+                "sport_images": self.sport_box.state,
+                "own_landscape_images": self.own_landscapes_box.state,
+                "sexy_images": self.sexy_box.state,
+                "random_images": self.random_box.state,
+                "nature_images": self.nature_box.state
+            }
 
+            print("Mindestens eine Checkbox ausgewählt")
+            save_pics_lists(checkboxes)
+        else:
+            print("Keine Checkbox ausgewählt")
+            reset_selected_pics_lists()
             self.load_checkbox_statuses()
 
     def load_checkbox_statuses(self):
+        print("load_checkbox_statuses")
         checkboxes = load_pics_lists()
         self.akira_box.state = checkboxes["akira_images"]
         self.cars_box.state = checkboxes["car_images"]
-        self.bundesliga_box.state = checkboxes["bundesliga_images"]
+        self.sport_box.state = checkboxes["sport_images"]
         self.own_landscapes_box.state = checkboxes["own_landscape_images"]
         self.sexy_box.state = checkboxes["sexy_images"]
         self.random_box.state = checkboxes["random_images"]
+        self.nature_box.state = checkboxes["nature_images"]
 
     def update_checkbox_theme(self):
         for box in self.checkbox_list:
@@ -1965,15 +1996,17 @@ class PicsSelectScreen(Screen):
         self.update_checkbox_theme()
         self.redraw()
 
-    def reset_settings(self):
+    def reset_checkboxes(self):
         checkboxes = reset_selected_pics_lists()  # Load Default Settings
         self.akira_box.state = checkboxes["akira_images"]
         self.cars_box.state = checkboxes["car_images"]
-        self.bundesliga_box.state = checkboxes["bundesliga_images"]
+        self.sport_box.state = checkboxes["sport_images"]
         self.own_landscapes_box.state = checkboxes["own_landscape_images"]
         self.sexy_box.state = checkboxes["sexy_images"]
         self.random_box.state = checkboxes["random_images"]
-        self.save_pics_lists()
+        self.nature_box.state = checkboxes["nature_images"]
+
+        self.save_pics_lists_screen()
         self.redraw()
 
 

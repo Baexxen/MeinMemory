@@ -602,14 +602,16 @@
     akira_box: akira_box
     cars_label: cars_label
     cars_box: cars_box
-    bundesliga_label: bundesliga_label
-    bundesliga_box: bundesliga_box
+    sport_label: sport_label
+    sport_box: sport_box
     own_landscapes_label: own_landscapes_label
     own_landscapes_box: own_landscapes_box
     sexy_label: sexy_label
     sexy_box: sexy_box
     random_label: random_label
     random_box: random_box
+    nature_label: nature_label
+    nature_box: nature_box
     reset_btn: reset_btn
 
     BoxLayout:
@@ -635,8 +637,7 @@
                 background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
                 background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
                 on_release:
-                    root.save_pics_lists()
-
+                    root.save_pics_lists_screen()
         BoxLayout:
             orientation: "horizontal"
             size_hint: 0.7, 1
@@ -652,23 +653,23 @@
                 background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
                 background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
                 on_release:
-                    root.save_pics_lists()
+                    root.save_pics_lists_screen()
         BoxLayout:
             orientation: "horizontal"
             size_hint: 0.7, 1
             spacing: 1
             LabelBackgroundColor:
-                id: bundesliga_label
-                text: "Bundesliga"
+                id: sport_label
+                text: "Sport"
                 size_hint: 0.8, 1
             CheckBox:
-                id: bundesliga_box
+                id: sport_box
                 size_hint: 0.2, 1
                 background_normal: ""
                 background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
                 background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
                 on_release:
-                    root.save_pics_lists()
+                    root.save_pics_lists_screen()
         BoxLayout:
             orientation: "horizontal"
             size_hint: 0.7, 1
@@ -684,7 +685,7 @@
                 background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
                 background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
                 on_release:
-                    root.save_pics_lists()
+                    root.save_pics_lists_screen()
         BoxLayout:
             orientation: "horizontal"
             size_hint: 0.7, 1
@@ -700,7 +701,7 @@
                 background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
                 background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
                 on_release:
-                    root.save_pics_lists()
+                    root.save_pics_lists_screen()
         BoxLayout:
             orientation: "horizontal"
             size_hint: 0.7, 1
@@ -716,7 +717,23 @@
                 background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
                 background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
                 on_release:
-                    root.save_pics_lists()
+                    root.save_pics_lists_screen()
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 0.7, 1
+            spacing: 1
+            LabelBackgroundColor:
+                id: nature_label
+                text: "Naturfotos"
+                size_hint: 0.8, 1
+            CheckBox:
+                id: nature_box
+                size_hint: 0.2, 1
+                background_normal: ""
+                background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
+                background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
+                on_release:
+                    root.save_pics_lists_screen()
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
@@ -731,7 +748,7 @@
                 text: "Reset"
                 size_hint: 0.2, 1.0
                 on_release:
-                    root.reset_settings()
+                    root.reset_checkboxes()
 
 # Bildschirm zur Auswahl des 'Beginners'
 <WhoStartsScreen>:

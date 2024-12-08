@@ -16,7 +16,7 @@ def process_images(input_dir, output_dir, size=(400, 400)):
                 img_resized = img.resize(size, Image.LANCZOS)
 
                 # In das PNG-Format konvertieren und speichern
-                output_filename = f"verschiedenes_{nr}.png"
+                output_filename = f"sport_{nr}.png"
                 output_filepath = os.path.join(output_dir, output_filename)
                 img_resized.save(output_filepath, 'PNG')
                 nr += 1
@@ -25,5 +25,6 @@ def process_images(input_dir, output_dir, size=(400, 400)):
 
 # Beispielverwendung
 input_directory = "pics/convert"
-output_directory = "pics/Verschiedenes"
+output_directory = "pics/Sport"
 process_images(input_directory, output_directory)
+print("Finished")

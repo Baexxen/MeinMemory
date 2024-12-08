@@ -4,28 +4,33 @@ import json
 
 # Standardwerte für die Einstellungen
 default_pics = {
-    "akira_images": "down",
+    "akira_images": "normal",
     "car_images": "down",
-    "bundesliga_images": "down",
-    "own_landscape_images": "down",
-    "sexy_images": "down",
-    "random_images": "down"
+    "sport_images": "down",
+    "own_landscape_images": "normal",
+    "sexy_images": "normal",
+    "random_images": "down",
+    "nature_images": "down"
 }
 
 
 # Einstellungen-Datei speichern
-def save_pics_lists(updated_pics_list, state):
-    print("Bilderlisten werden gespeichert.")
+def save_pics_lists(checkboxes):
+    # print("Bilderlisten werden gespeichert.")
     app = App.get_running_app()
     pics_lists_file_path = app.get_pics_lists_file_path()
-    pics_lists = load_pics_lists()
+    # pics_lists = load_pics_lists()
     with open(pics_lists_file_path, 'r+') as file:
-        if updated_pics_list in pics_lists:
-            pics_lists[updated_pics_list] = state
-            # print(f"Bilderlisten wurden geändert. {pics_lists}")
-            json.dump(pics_lists, file, indent=4)
-        else:
-            print(f"Bilderliste ({updated_pics_list}) wurde nicht erkannt.")
+        try:
+            file.seek(0)
+            json.dump(checkboxes, file, indent=4)
+            file.truncate()
+        except json.JSONDecodeError:
+            print("Fehler beim Speichern der Bilder 'json' Datei. Datei wird zurückgesetzt.")
+            # Dateiinhalt zurücksetzen
+            file.seek(0)
+            json.dump(default_pics, file, indent=4)
+            file.truncate()
 
 
 # Einstellungen-Datei laden
@@ -37,17 +42,23 @@ def load_pics_lists():
     if os.path.exists(pics_lists_file_path):
         with open(pics_lists_file_path, "r+") as file:  # Öffnen zum Lesen und Schreiben
             try:
+                error = 0
                 pics_lists = json.load(file)
                 # Überprüfen, ob alle Keys vorhanden sind
                 for key in default_pics:
                     if key not in pics_lists:
                         print(f"{key} nicht gefunden, wird mit 'Default-Wert' ersetzt.")
                         pics_lists[key] = default_pics[key]
-
-                # Datei zurück an den Anfang setzen und mit neuen Werten überschreiben
-                file.seek(0)
-                json.dump(pics_lists, file, indent=4)
-                file.truncate()  # Restinhalt löschen, falls die neue Datei kleiner ist
+                        error += 1
+                if error > 0:
+                    file.seek(0)
+                    json.dump(default_pics, file, indent=4)
+                    file.truncate()
+                    pics_lists = default_pics
+                else:
+                    file.seek(0)
+                    json.dump(pics_lists, file, indent=4)
+                    file.truncate()  # Restinhalt löschen, falls die neue Datei kleiner ist
 
                 return pics_lists
 
@@ -66,4 +77,14 @@ def load_pics_lists():
 
 
 def reset_selected_pics_lists():
+    print("Bilderlisten werden zurückgesetzt.")
+    app = App.get_running_app()
+    pics_lists_file_path = app.get_pics_lists_file_path()
+
+    if os.path.exists(pics_lists_file_path):
+        with open(pics_lists_file_path, "r+") as file:  # Öffnen zum Lesen und Schreiben
+            file.seek(0)
+            json.dump(default_pics, file, indent=4)
+            file.truncate()
+
     return default_pics

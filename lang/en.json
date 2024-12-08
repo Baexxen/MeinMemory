@@ -49,10 +49,11 @@
     "pic_select": "Select Pictures",
     "akira_label": "Akira (my dog <3)",
     "cars_label": "Cars",
-    "bundesliga_label": "Bundesliga Logos",
+    "sport_label": "Sport Emblems/Pictures",
     "own_landscapes_label": "Landscape Pictures (taken by me)",
     "sexy_label": "Sexy Women",
     "random_label": "Random Stuff",
+    "nature_label": "Nature Pictures",
 
     "_comment_WhoStarts": "WhoStarts",
     "who_starts_label": "Who starts? Pick 'Heads' or 'Tails'.",

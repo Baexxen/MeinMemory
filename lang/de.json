@@ -49,10 +49,11 @@
     "pic_select": "Bilder wählen",
     "akira_label": "Akira (Mein Hund <3)",
     "cars_label": "Autos",
-    "bundesliga_label": "Bundesliga Logos",
+    "sport_label": "Sport Logos/Fotos",
     "own_landscapes_label": "Landschaftsfotos (von mir gemacht)",
     "sexy_label": "Sexy Frauen",
     "random_label": "Zufälliges Zeug",
+    "nature_label": "Naturfotos",
 
     "_comment_WhoStarts": "WhoStarts",
     "who_starts_label": "Wer beginnt? Wähle 'Kopf' oder 'Zahl'.",
