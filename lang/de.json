@@ -26,7 +26,7 @@
     "impossible": "Unmöglich",
     "start_game": "Spiel starten",
 
-    "_comment_Settings": "Settings",
+    "_comment_Settings": "Settings_Screen",
     "theme": "Optik",
     "light": "Hell",
     "dark": "Dunkel",
@@ -46,7 +46,10 @@
     "language": "Sprache:",
     "english": "English",
     "deutsch": "Deutsch",
+    "highscores": "Highscores",
     "pic_select": "Bilder wählen",
+
+    "_comment_Select_Pictures": "Select_Pictures_Screen",
     "akira_label": "Akira (Mein Hund <3)",
     "cars_label": "Autos",
     "sport_label": "Sport Logos/Fotos",
@@ -55,7 +58,7 @@
     "random_label": "Zufälliges Zeug",
     "nature_label": "Naturfotos",
 
-    "_comment_WhoStarts": "WhoStarts",
+    "_comment_WhoStarts": "WhoStarts_Screen",
     "who_starts_label": "Wer beginnt? Wähle 'Kopf' oder 'Zahl'.",
     "heads": "Kopf",
     "tails": "Zahl",
@@ -85,6 +88,6 @@
     "restart": "Neustart",
 
     "_comment_GameScreen_Players": "Players",
-    "player_1_name": "Spieler_1",
-    "player_2_name": "Spieler_2"
+    "player_1_name": "Spieler 1",
+    "player_2_name": "Spieler 2"
 }

@@ -26,7 +26,7 @@
     "impossible": "Impossible",
     "start_game": "Start Game",
 
-    "_comment_Settings": "Settings",
+    "_comment_Settings": "Settings_Screen",
     "theme": "Theme",
     "light": "Light",
     "dark": "Dark",
@@ -46,7 +46,10 @@
     "language": "Language:",
     "english": "English",
     "deutsch": "Deutsch",
+    "highscores": "Highscores",
     "pic_select": "Select Pictures",
+
+    "_comment_Select_Pictures": "Select_Pictures_Screen",
     "akira_label": "Akira (my dog <3)",
     "cars_label": "Cars",
     "sport_label": "Sport Emblems/Pictures",
@@ -55,7 +58,7 @@
     "random_label": "Random Stuff",
     "nature_label": "Nature Pictures",
 
-    "_comment_WhoStarts": "WhoStarts",
+    "_comment_WhoStarts": "WhoStarts_Screen",
     "who_starts_label": "Who starts? Pick 'Heads' or 'Tails'.",
     "heads": "Heads",
     "tails": "Tails",
@@ -85,6 +88,6 @@
     "restart": "Restart",
 
     "_comment_GameScreen_Players": "Players",
-    "player_1_name": "Player_1",
-    "player_2_name": "Player_2"
+    "player_1_name": "Player 1",
+    "player_2_name": "Player 2"
 }

@@ -96,3 +96,25 @@ def update_best_scores(game_mode, difficulty, board_size, score):
                 return True  # Neuer Highscore
         return False  # Kein neuer Highscore
     return False
+
+
+def reset_highscores():
+    print("Highscores werden zurückgesetzt")
+    app = App.get_running_app()
+    score_file_path = app.get_score_file_path()
+
+    if os.path.exists(score_file_path):
+        with open(score_file_path, "r+") as file:  # Öffnen zum Lesen und Schreiben
+            try:
+                # Dateiinhalt zurücksetzen
+                file.seek(0)
+                json.dump(default_scores, file, indent=4)
+                file.truncate()
+                return default_scores
+            except json.JSONDecodeError:
+                print("Fehler beim Laden der Highscores. Datei wird zurückgesetzt.")
+                # Dateiinhalt zurücksetzen
+                file.seek(0)
+                json.dump(default_scores, file, indent=4)
+                file.truncate()
+                return default_scores

@@ -16,6 +16,7 @@ from kivy.metrics import sp
 from random import shuffle, randint
 from math import sqrt
 from jnius import autoclass
+from PIL import Image as PILImage, ImageDraw
 import os
 import logging
 import time
@@ -24,8 +25,11 @@ import locale
 # Translator
 from translator import Translator
 
+# Custom UI
+from custom_ui import MyScatter, MyMemoryGrid, LabelBackgroundColor, ButtonBackgroundColor
+
 # Highscore
-from score_manager import load_best_scores, save_best_scores, update_best_scores
+from score_manager import load_best_scores, save_best_scores, update_best_scores, reset_highscores
 
 # Settings
 from settings_manager import save_settings, load_settings, reset_settings, get_system_language
@@ -41,10 +45,11 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.checkbox import CheckBox
-from custom_ui import MyScatter, MyMemoryGrid, LabelBackgroundColor, ButtonBackgroundColor
+
 
 # Global variables initialization
 logging.basicConfig(level=logging.DEBUG)
+# logging.getLogger("PIL").setLevel(logging.WARNING)
 
 WHITE = (1, 1, 1, 1)
 BLACK = (0, 0, 0, 1)
@@ -61,7 +66,6 @@ WINDOW_CLEARCOLOR_THEME = {
     "dark": DARK_BLUE,
     "color": LIGHT_BLUE
 }
-
 CARD_COVER_THEME = {
     "light": "pics/Default_light.png",
     "dark": "pics/Default_dark.png",
@@ -602,7 +606,11 @@ class Card(ButtonBehavior, Image):
         self.flip_duration = self.flip_steps * self.animation_delay + 0.2
         self.starting_pos = (0, 0)
         self.pic = None
+        self.pic_source = None
         self.flip_animation = "flip"
+        self.source = "pics/Default.png"
+        self.pic_background_color = (242, 179, 54)  # Orange
+        self.theme_color = "color"
 
     def clicked(self):
         print(f"card_clicked: Animation: {self.flip_animation}")
@@ -717,7 +725,63 @@ class Card(ButtonBehavior, Image):
         return None
 
     def update_theme(self, theme_color):
-        self.default_pic = CARD_COVER_THEME[theme_color]
+        if theme_color == "light":
+            self.pic_background_color = (255, 196, 150)  # Beige
+        elif theme_color == "dark":
+            self.pic_background_color = (0, 0, 0)  # Black
+        elif theme_color == "color":
+            self.pic_background_color = (242, 179, 54)  # Orange
+        if not DEBUGGING:
+            self.default_pic = CARD_COVER_THEME[theme_color]
+            if not self.flipped:
+                self.source = self.default_pic
+
+        if self.theme_color != theme_color:
+            print(f"UpdateTheme Vorher; Theme_Color: {theme_color} / Self.Theme_Color: {self.theme_color}")
+            self.theme_color = theme_color
+            if self.card_size_base is not None:
+                self.pic = self.generate_combined_image(self.pic_source, self.pic_background_color)
+                if self.flipped:
+                    self.source = self.pic
+            print(f"UpdateTheme Nachher; Theme_Color: {theme_color} / Self.Theme_Color: {self.theme_color}")
+
+    def generate_combined_image(self, pic_source, background_color):
+        """
+        Erzeugt ein zusammengesetztes Bild mit Hintergrund und skaliertem Bild.
+        """
+        # Zielgröße (z. B. Größe der Karte)
+        card_width, card_height = self.card_size_base
+        card_width = int(card_width)
+        card_height = int(card_height)
+
+        # Erstelle ein neues leeres Bild mit Hintergrundfarbe
+        background = PILImage.new("RGBA", (card_width, card_height), background_color)
+
+        # Lade das Originalbild
+        original_image = PILImage.open(pic_source)
+        img_width, img_height = original_image.size
+
+        # Berechne die Skalierung, um das Seitenverhältnis beizubehalten
+        scale = min(card_width / img_width, card_height / img_height)
+        new_width = int(img_width * scale)
+        new_height = int(img_height * scale)
+
+        # Skaliere das Originalbild
+        scaled_image = original_image.resize((new_width, new_height), PILImage.LANCZOS)
+
+        # Zentriere das Bild auf dem Hintergrund
+        offset_x = (card_width - new_width) // 2
+        offset_y = (card_height - new_height) // 2
+
+        # Kombiniere das skalierte Bild mit dem Hintergrund
+        background.paste(scaled_image, (offset_x, offset_y), None)
+
+        # Speichere das Bild in einem temporären Pfad
+        combined_image_path = f"pics/generated/card_{self.value}.png"
+        os.makedirs(os.path.dirname(combined_image_path), exist_ok=True)
+        background.save(combined_image_path)
+
+        return combined_image_path
 
 
 # region Screens #################################################################################################
@@ -817,16 +881,18 @@ class GameScreen(Screen):
             card = Card(value)
             self.memory_grid.add_widget(card)
             card.parent = card.get_scatter_parent()
+            card.theme_color = self.theme_color
             card.game_screen = self
             card.flip_animation = self.card_flip_animation
             card.source = self.app.pics_list[value - 1]
             card.pic = self.app.pics_list[value - 1]
+            card.pic_source = card.pic
             card.background_disabled_normal = card.pic
             card.background_down = card.pic
             if DEBUGGING:
                 card.default_pic = card.pic
             else:
-                card.default_pic = CARD_COVER_THEME[self.theme_color]
+                card.default_pic = CARD_COVER_THEME[card.theme_color]
             self.card_list.append(card)
 
         self.game_over = False
@@ -871,71 +937,14 @@ class GameScreen(Screen):
             else:
                 if not card.shrink_event and not card.zoom_event:
                     card.source = card.pic
-                count_found_cards += 1
-            card.text = str(card.value)
+                if not self.game_over:
+                    count_found_cards += 1
 
-        if count_found_cards == len(self.card_list) and not self.game_over:
+        if count_found_cards == len(self.card_list) and self.game_running and not self.game_over:
             self.game_over = True
             self.game_running = False
             self.top_label.text = self.app.translator.gettext("game_over")
-
-        if self.game_over:
-            score = 0
-            highscore_valid = False
-            if self.current_game_mode == "standard":
-                score = self.player.turns
-                if score >= self.cards // 2:
-                    highscore_valid = True
-            elif self.current_game_mode == "battle":
-                score = self.player.score
-                highscore_valid = True
-            elif self.current_game_mode == "time_race":
-                score = self.elapsed_time
-                if score > 2:
-                    highscore_valid = True
-            elif self.current_game_mode == "duell_standard":
-                score_1 = self.player.score
-                score_2 = self.player2.score
-                highscore_valid = True
-
-            if highscore_valid:
-                highscore = update_best_scores(self.current_game_mode, self.current_difficulty, self.board_size, score)
-                if highscore:
-                    self.top_label.text = self.app.translator.gettext("new_highscore").format(player_score=self.player.score)
-                    self.current_highscore = score
-                    if self.current_game_mode != "time_race":
-                        self.game_over_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
-                    else:
-                        self.game_over_label.text = self.app.translator.gettext("new_highscore_time_race").format(elapsed_time=score)
-                    self.game_over_label.hide = False
-                    self.game_over_label.opacity = 1
-                    self.game_over_label.redraw()
-                    self.start_game_over_animation()
-                else:
-                    if self.current_game_mode == "duell_standard":
-                        if self.player.score > self.player2.score:
-                            self.top_label.text = self.app.translator.gettext("victory_player_1").format(player_1_name=self.player.name)
-                            game_over_label_text = self.app.translator.gettext("victory_player_1").format(player_1_name=self.player.name)
-                        elif self.player.score == self.player2.score:
-                            self.top_label.text = self.app.translator.gettext("draw")
-                            game_over_label_text = self.app.translator.gettext("draw")
-                        else:
-                            self.top_label.text = self.app.translator.gettext("victory_player_2").format(player_2_name=self.player2.name)
-                            game_over_label_text = self.app.translator.gettext("victory_player_2").format(player_2_name=self.player2.name)
-                    else:
-                        self.top_label.text = self.app.translator.gettext("no_new_highscore")
-                        game_over_label_text = self.app.translator.gettext("no_new_highscore")
-
-                    self.game_over_label.text = game_over_label_text
-                    self.game_over_label.hide = False
-                    self.game_over_label.opacity = 1
-                    self.game_over_label.redraw()
-                    self.start_game_over_animation()
-            self.update_time_display()
-
-            self.current_player = self.player
-            Clock.unschedule(self.update_time)
-            self.time_race_running = False
+            self.end_running_game()
 
         if self.current_game_mode == "standard":
             self.bottom_label.text = self.app.translator.gettext("bottom_standard").format(player_turns=self.player.turns, current_highscore=self.current_highscore)
@@ -985,6 +994,9 @@ class GameScreen(Screen):
             col = i % cols
             card.pos = (col * card_width, window_height - (row + 1) * card_height)
             card.starting_pos = (col * card_width, window_height - (row + 1) * card_height)
+            card.update_theme(self.theme_color)
+            card.pic = card.generate_combined_image(card.pic_source, card.pic_background_color)
+            card.flip_animation = self.card_flip_animation
 
     def on_touch_down(self, touch):
         self.active_touches.add(touch.uid)
@@ -1139,9 +1151,6 @@ class GameScreen(Screen):
         theme = settings["theme"]
         self.theme_color = get_theme_color(theme)
         self.memory_grid.redraw(self.theme_color)
-        for card in self.card_list:
-            card.update_theme(self.theme_color)
-        self.update()
 
     def on_pre_leave(self, *args):
         if self.current_game_mode == "time_race" and self.time_race_running:
@@ -1149,13 +1158,77 @@ class GameScreen(Screen):
         return super().on_pre_leave()
 
     def on_pre_enter(self, *args):
+        print("On_Pre_Enter_Game_Screen")
         self.load_settings()
-        for card in self.card_list:
-            card.flip_animation = self.card_flip_animation
         self.reset_widgets()
+        self.update_card_pos_and_size()
+        self.update()
         if self.current_game_mode == "time_race" and self.time_race_running:
             self.start_time_count_up()
         return super().on_pre_enter()
+
+    def end_running_game(self):
+        score = self.player.turns
+        highscore_valid = False
+        if self.current_game_mode == "standard":
+            score = self.player.turns
+            if score >= self.cards // 2:
+                highscore_valid = True
+        elif self.current_game_mode == "battle":
+            score = self.player.score
+            highscore_valid = True
+        elif self.current_game_mode == "time_race":
+            score = self.elapsed_time
+            if score > 2:
+                highscore_valid = True
+        elif self.current_game_mode == "duell_standard":
+            score_1 = self.player.score
+            score_2 = self.player2.score
+            if score_1 > score_2:
+                score = score_1
+            else:
+                score = score_2
+            highscore_valid = True
+
+        if highscore_valid:
+            highscore = update_best_scores(self.current_game_mode, self.current_difficulty, self.board_size, score)
+            if highscore:
+                self.top_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
+                self.current_highscore = score
+                if self.current_game_mode != "time_race":
+                    self.game_over_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
+                else:
+                    self.game_over_label.text = self.app.translator.gettext("new_highscore_time_race").format(elapsed_time=score)
+                self.game_over_label.hide = False
+                self.game_over_label.opacity = 1
+                self.game_over_label.redraw()
+                self.start_game_over_animation()
+            else:
+                if self.current_game_mode == "duell_standard":
+                    if self.player.score > self.player2.score:
+                        self.top_label.text = self.app.translator.gettext("victory_player_1").format(player_1_name=self.player.name)
+                        game_over_label_text = self.app.translator.gettext("victory_player_1").format(player_1_name=self.player.name)
+                    elif self.player.score == self.player2.score:
+                        self.top_label.text = self.app.translator.gettext("draw")
+                        game_over_label_text = self.app.translator.gettext("draw")
+                    else:
+                        self.top_label.text = self.app.translator.gettext("victory_player_2").format(player_2_name=self.player2.name)
+                        game_over_label_text = self.app.translator.gettext("victory_player_2").format(player_2_name=self.player2.name)
+                else:
+                    self.top_label.text = self.app.translator.gettext("no_new_highscore")
+                    game_over_label_text = self.app.translator.gettext("no_new_highscore")
+
+                self.game_over_label.text = game_over_label_text
+                self.game_over_label.hide = False
+                self.game_over_label.opacity = 1
+                self.game_over_label.redraw()
+                self.start_game_over_animation()
+        self.update_time_display()
+
+        self.current_player = self.player
+        Clock.unschedule(self.update_time)
+        self.time_race_running = False
+        self.game_running = False
 
     def start_game_over_animation(self):
         if not self.game_over_animation_running:
@@ -1561,6 +1634,8 @@ class SettingsScreen(Screen):
     lang_btn_de = ObjectProperty(None)
     back_button = ObjectProperty()
     pic_select_btn = ObjectProperty()
+    highscores_label = ObjectProperty()
+    highscores_reset_btn = ObjectProperty()
     reset_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
@@ -1620,6 +1695,8 @@ class SettingsScreen(Screen):
         self.lang_btn_de.text = self.app.translator.gettext("deutsch")
         self.back_button.text = self.app.translator.gettext("back")
         self.pic_select_btn.text = self.app.translator.gettext("pic_select")
+        self.highscores_label.text = self.app.translator.gettext("highscores")
+        self.highscores_reset_btn.text = self.app.translator.gettext("reset")
         self.reset_btn.text = self.app.translator.gettext("reset")
 
     def load_settings(self):
@@ -1752,6 +1829,7 @@ class SettingsScreen(Screen):
 
         new_setting = ("theme", self.theme)
         save_settings(new_setting)
+        self.redraw()
 
     def update_card_flip_animation_buttons(self, button_id):
         if button_id == 0:
@@ -1856,6 +1934,10 @@ class SettingsScreen(Screen):
             self.hide_cards_timeout = round(self.hide_cards_timeout, 1)
             new_setting = ("hide_cards_timeout", self.hide_cards_timeout)
             save_settings(new_setting)
+
+    def reset_highscores(self):
+        reset_highscores()
+        self.redraw()
 
     def reset_settings(self):
         settings = reset_settings()  # load default settings

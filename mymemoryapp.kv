@@ -400,6 +400,8 @@
     lang_btn_de: lang_btn_de
     back_button: back_button
     pic_select_btn: pic_select_btn
+    highscores_label: highscores_label
+    highscores_reset_btn: highscores_reset_btn
     reset_btn: reset_btn
     BoxLayout:
         orientation: "vertical"
@@ -578,6 +580,20 @@
                 on_release:
                     root.decrease_hide_cards_timeout()
                     root.change_hide_cards_timeout_label_text()
+        BoxLayout:
+            orientation: "horizontal"
+            padding: (5, 5, 5, 5)
+            spacing: 5
+            LabelBackgroundColor:
+                text: "Highscores:"
+                id: highscores_label
+                size_hint: 0.5, 1
+            ButtonBackgroundColor:
+                text: "Reset"
+                id: highscores_reset_btn
+                size_hint: 0.5, 1
+                on_release:
+                    root.reset_highscores()
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
