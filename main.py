@@ -957,7 +957,7 @@ class GameScreen(Screen):
                     card.source = card.pic
                 if not self.game_over:
                     count_found_cards += 1
-
+        print(f"Found Cards: {count_found_cards}/{len(self.card_list)} GameRunning: {self.game_running}, GameOver: {self.game_over}")
         if count_found_cards == len(self.card_list) and self.game_running and not self.game_over:
             self.game_over = True
             self.game_running = False
@@ -1055,7 +1055,7 @@ class GameScreen(Screen):
                     if self.current_player == self.ai:
                         all_found = self.all_cards_found()
                         if all_found:
-                            self.game_over = True
+                            self.end_running_game()
                         else:
                             players_last_cards = [first_card, second_card]
                             if self.card_flip_animation == "flip":
