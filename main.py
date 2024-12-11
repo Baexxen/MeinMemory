@@ -295,6 +295,7 @@ class MyMemoryApp(App):
 
     def exit_app(self):
         Cache.remove("kv.image")
+        self.game_screen.clear_generated_folder()
         self.get_running_app().stop()
         sys.exit()
 
