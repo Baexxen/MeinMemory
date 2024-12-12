@@ -22,7 +22,6 @@ import os
 import logging
 import time
 import locale
-import uuid
 
 # Translator
 from translator import Translator
