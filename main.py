@@ -612,6 +612,7 @@ class Card(ButtonBehavior, Image):
         self.theme_color = "color"
         self.background_disabled_normal = self.pic
         self.background_down = self.pic
+        self.app = None
 
     def clicked(self):
         if self.zoom_event:
@@ -784,7 +785,10 @@ class Card(ButtonBehavior, Image):
         background.paste(scaled_image, (offset_x, offset_y), None)
 
         # Speichere das Bild in einem temporären Pfad
-        combined_image_path = f"pics/generated/card_{self.value}.png"
+        new_name = f"card_{self.value}.png"
+        user_dir = self.app.user_data_dir
+        combined_image_path = os.path.join(user_dir, new_name)
+        print(combined_image_path, " ####################")
         os.makedirs(os.path.dirname(combined_image_path), exist_ok=True)
         background.save(combined_image_path, format="PNG")
 
@@ -888,14 +892,15 @@ class GameScreen(Screen):
 
         shuffle(self.app.pics_list)
         shuffle(card_values)
+        print(card_values)
         for value in card_values:
             card = Card(value)
+            card.app = App.get_running_app()
             self.memory_grid.add_widget(card)
             card.parent = card.get_scatter_parent()
             card.game_screen = self
             card.flip_animation = self.card_flip_animation
             card.pic = self.app.pics_list[value - 1]
-            card.source = card.pic
             card.pic_source = card.pic
             card.background_disabled_normal = card.pic
             card.background_down = card.pic
@@ -976,7 +981,9 @@ class GameScreen(Screen):
                 generated_pics.append(card.pic)
                 pic = card.generate_combined_image(card.pic, card.pic_background_color)
             else:
-                combined_image_path = f"pics/generated/card_{card.value}.png"
+                new_name = f"card_{card.value}.png"
+                user_dir = self.app.user_data_dir
+                combined_image_path = os.path.join(user_dir, new_name)
                 if os.path.exists(combined_image_path):
                     pic = combined_image_path
                 else:
@@ -1300,9 +1307,10 @@ class GameScreen(Screen):
         self.who_starts_screen = self.app.root.get_screen("who_starts")
 
     def clear_generated_folder(self):
-        for file in os.listdir("pics/generated/"):
-            path = os.path.join("pics/generated/", file)
-            os.remove(path)
+        for file in os.listdir(self.app.user_data_dir):
+            if file.endswith(".png"):
+                path = os.path.join(self.app.user_data_dir, file)
+                os.remove(path)
         for card in Card.instances:
             card.remove_from_cache()
             if card not in self.card_list:
