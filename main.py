@@ -22,6 +22,7 @@ import os
 import logging
 import time
 import locale
+import uuid
 
 # Translator
 from translator import Translator
@@ -160,7 +161,6 @@ class MyMemoryApp(App):
         self.who_starts_screen = self.root.get_screen("who_starts")
 
     def start_new_game(self, board_size="small", game_mode="standard", difficulty="easy"):
-        print(f"MyMemoryApp start new game {game_mode} {difficulty}")
         self.game_screen.current_game_mode = game_mode
         self.current_difficulty = difficulty
         self.game_screen.current_difficulty = self.current_difficulty
@@ -294,7 +294,6 @@ class MyMemoryApp(App):
         return os.path.join(self.user_data_dir, "pics_lists.json")
 
     def exit_app(self):
-        Cache.remove("kv.image")
         self.game_screen.clear_generated_folder()
         self.get_running_app().stop()
         sys.exit()
@@ -616,7 +615,6 @@ class Card(ButtonBehavior, Image):
         self.background_down = self.pic
 
     def clicked(self):
-        print(f"card_clicked: Animation: {self.flip_animation}")
         if self.zoom_event:
             Clock.unschedule(self.zoom_event)
             self.size = self.card_size_base
@@ -727,8 +725,7 @@ class Card(ButtonBehavior, Image):
             parent = parent.parent
         return None
 
-    def update_theme(self, theme_color):
-        print(f"Card: Update_Theme; Card: {self.value}")
+    def set_background_color(self, theme_color):
         if theme_color == "light":
             self.pic_background_color = (255, 196, 150)  # Beige
         elif theme_color == "dark":
@@ -737,35 +734,43 @@ class Card(ButtonBehavior, Image):
             self.pic_background_color = (242, 179, 54)  # Orange
         if not DEBUGGING:
             self.default_pic = CARD_COVER_THEME[theme_color]
-            if not self.flipped:
-                self.source = self.default_pic
+
+    def update_theme(self, theme_color):
+        self.set_background_color(theme_color)
 
         if self.theme_color != theme_color:
             self.theme_color = theme_color
-            self.card_size_base = self.game_screen.card_size_base
+            pic = self.generate_combined_image(self.pic_source, self.pic_background_color)
             self.remove_from_cache()
-            self.pic = ""
-            pic = self.generate_combined_image(self.pic_source, self.pic_background_color, self.game_screen.card_size_base)
             self.pic = pic
+            self.source = self.pic
+            Clock.schedule_once(self.reload_image, 0.1)
 
-    def generate_combined_image(self, pic, background_color, card_size_base):
+    def reload_image(self, dt):
+        self.remove_from_cache()
+        self.reload()
+        if self.disabled or self.flipped:
+            self.source = self.pic
+        else:
+            self.source = self.default_pic
+
+    def generate_combined_image(self, pic, background_color):
         """
         Erzeugt ein zusammengesetztes Bild mit Hintergrund und skaliertem Bild.
         """
-        # Zielgröße (z. B. Größe der Karte)
-        card_width, card_height = card_size_base
-        card_width = int(card_width)
-        card_height = int(card_height)
-
-        # Erstelle ein neues leeres Bild mit Hintergrundfarbe
-        background = PILImage.new("RGBA", (card_width, card_height), background_color)
-
         # Lade das Originalbild
         original_image = PILImage.open(pic)
         img_width, img_height = original_image.size
+        if img_width > img_height:
+            gen_size = (img_width, img_width)
+        else:
+            gen_size = (img_height, img_height)
+
+        # Erstelle ein neues leeres Bild mit Hintergrundfarbe
+        background = PILImage.new("RGBA", gen_size, background_color)
 
         # Berechne die Skalierung, um das Seitenverhältnis beizubehalten
-        scale = min(card_width / img_width, card_height / img_height)
+        scale = min(gen_size[0] / img_width, gen_size[1] / img_height)
         new_width = int(img_width * scale)
         new_height = int(img_height * scale)
 
@@ -773,8 +778,8 @@ class Card(ButtonBehavior, Image):
         scaled_image = original_image.resize((new_width, new_height), PILImage.LANCZOS)
 
         # Zentriere das Bild auf dem Hintergrund
-        offset_x = (card_width - new_width) // 2
-        offset_y = (card_height - new_height) // 2
+        offset_x = (gen_size[0] - new_width) // 2
+        offset_y = (gen_size[1] - new_height) // 2
 
         # Kombiniere das skalierte Bild mit dem Hintergrund
         background.paste(scaled_image, (offset_x, offset_y), None)
@@ -784,10 +789,10 @@ class Card(ButtonBehavior, Image):
         os.makedirs(os.path.dirname(combined_image_path), exist_ok=True)
         background.save(combined_image_path, format="PNG")
 
+        self.remove_from_cache()
         self.pic = combined_image_path
         self.source = self.pic
         self.pic_source = pic
-        print(f"Ende der Generierung: PIC_SOURCE = {self.pic_source} // Sollte ein 'normaler' Pfadname sein.")
         return combined_image_path
 
 
@@ -852,7 +857,6 @@ class GameScreen(Screen):
 
     def restart_game(self):
         self.load_settings()
-        Cache.remove("kv.image")
         self.flip_duration = 0
         if self.game_over_animation_running:
             Clock.unschedule(self.game_over_animation_running)
@@ -877,7 +881,7 @@ class GameScreen(Screen):
         self.memory_grid.clear_widgets()
         self.memory_grid.update_rect()
         card_values = list(range(1, (self.cards // 2 + 1))) * 2
-        self.card_list = []
+        self.card_list.clear()
         self.clear_generated_folder()
         self.card_size_max = None
         self.card_size_base = None
@@ -889,7 +893,6 @@ class GameScreen(Screen):
             card = Card(value)
             self.memory_grid.add_widget(card)
             card.parent = card.get_scatter_parent()
-            card.theme_color = self.theme_color
             card.game_screen = self
             card.flip_animation = self.card_flip_animation
             card.pic = self.app.pics_list[value - 1]
@@ -897,10 +900,9 @@ class GameScreen(Screen):
             card.pic_source = card.pic
             card.background_disabled_normal = card.pic
             card.background_down = card.pic
+            card.set_background_color(self.theme_color)
             if DEBUGGING:
                 card.default_pic = card.pic
-            else:
-                card.default_pic = CARD_COVER_THEME[card.theme_color]
             self.card_list.append(card)
 
         self.game_over = False
@@ -924,18 +926,7 @@ class GameScreen(Screen):
         self.game_over_label.hide = True
         self.game_over_label.opacity = 0
         self.game_over_label.font_size = FONT_SIZE_LARGE
-
-        schleife = 0
-        for card in self.card_list:
-            schleife += 1
-            card.card_size_base = self.card_size_base
-            card.source = ""
-            print(f"Vor der Generierung; Pic={card.pic}, Pic_Source={card.pic_source}")
-            pic = card.generate_combined_image(card.pic, card.pic_background_color, self.card_size_base)
-            card.pic = pic
-            print(f"Nach der Generierung; Pic={card.pic}, Pic_Source={card.pic_source}")
-            card.remove_from_cache()
-        Clock.schedule_once(self.reload_card_pics, 0.1)
+        self.generate_new_images()
 
     def update(self):
         print("GameScreen: update")
@@ -958,7 +949,7 @@ class GameScreen(Screen):
                     card.source = card.pic
                 if not self.game_over:
                     count_found_cards += 1
-        print(f"Found Cards: {count_found_cards}/{len(self.card_list)} GameRunning: {self.game_running}, GameOver: {self.game_over}")
+
         if count_found_cards == len(self.card_list) and self.game_running and not self.game_over:
             self.game_over = True
             self.game_running = False
@@ -978,6 +969,22 @@ class GameScreen(Screen):
             pass
         self.menu_btn.text = self.app.translator.gettext("menu")
         self.restart_btn.text = self.app.translator.gettext("restart")
+
+    def generate_new_images(self):
+        generated_pics = []
+        for card in self.card_list:
+            if card.pic not in generated_pics:
+                generated_pics.append(card.pic)
+                pic = card.generate_combined_image(card.pic, card.pic_background_color)
+            else:
+                combined_image_path = f"pics/generated/card_{card.value}.png"
+                if os.path.exists(combined_image_path):
+                    pic = combined_image_path
+                else:
+                    pic = card.generate_combined_image(card.pic, card.pic_background_color)
+            card.remove_from_cache()
+            card.pic = pic
+        Clock.schedule_once(self.reload_card_pics, 0.1)
 
     def update_card_pos_and_size(self):
         # Fenstergröße und Kartenanzahl ermitteln
@@ -1081,17 +1088,14 @@ class GameScreen(Screen):
         self.update()
 
     def kill_cards(self, first_card, second_card):
-        print("kill_cards")
         for card in self.card_list:
             if card == first_card or card == second_card:
                 card.disabled = True
                 card.flipped = True
-                print(f"Karte {card.value} disabled.")
         self.input_enabled = True
         self.ai.remove_pair(first_card)
 
     def hide_cards(self, first_card, second_card):
-        print("GameScreen: hide_cards")
         for card in self.card_list:
             if card == first_card or card == second_card:
                 card.clicked()
@@ -1167,10 +1171,12 @@ class GameScreen(Screen):
         self.ai_timeout = settings["ai_timeout"]
         self.hide_cards_timeout = settings["hide_cards_timeout"]
         theme = settings["theme"]
-        self.theme_color = get_theme_color(theme)
-        self.memory_grid.redraw(self.theme_color)
-        for card in self.card_list:
-            card.update_theme(self.theme_color)
+        theme_color = get_theme_color(theme)
+        if theme_color != self.theme_color:
+            self.theme_color = theme_color
+            self.memory_grid.redraw(self.theme_color)
+            for card in self.card_list:
+                card.update_theme(self.theme_color)
 
     def on_pre_leave(self, *args):
         if self.current_game_mode == "time_race" and self.time_race_running:
@@ -1178,7 +1184,6 @@ class GameScreen(Screen):
         return super().on_pre_leave()
 
     def on_pre_enter(self, *args):
-        print("On_Pre_Enter_Game_Screen")
         self.load_settings()
         self.reset_widgets()
         self.reload_card_pics(dt="test")
@@ -1290,34 +1295,27 @@ class GameScreen(Screen):
             self.scatter.scale = self.scatter.scale_max
         if self.scatter.scale == self.scatter.scale_max:
             Clock.unschedule(self.game_over_animation_running)
-            print("GameOverAnimation beendet ############################################")
             self.game_over_animation_running = None
 
     def get_who_starts_screen(self):
         self.who_starts_screen = self.app.root.get_screen("who_starts")
 
     def clear_generated_folder(self):
-        print(f"CLEAR_GENERATED_FOLDER; Cards: {len(Card.instances)}")
         for file in os.listdir("pics/generated/"):
             path = os.path.join("pics/generated/", file)
             os.remove(path)
-        self.card_list.clear()
-        self.memory_grid.clear_widgets()
         for card in Card.instances:
             card.remove_from_cache()
-        while Card.instances:
-            card = Card.instances.pop()
-            del card
-        print(f"CLEAR_GENERATED_FOLDER afterwards; Cards: {len(Card.instances)}")
+            if card not in self.card_list:
+                del card
 
     def reload_card_pics(self, dt):
-        counter = 0
         for card in self.card_list:
-            counter += 1
-            print(f"Reload_Card_Pics: {counter}/{len(self.card_list)}")
-            card.source = card.pic
-            card.source = card.default_pic
-        self.update()
+            card.remove_from_cache()
+            if card.disabled or card.flipped:
+                card.source = card.pic
+            else:
+                card.source = card.default_pic
 
 
 class MainMenuScreen(Screen):
@@ -2081,10 +2079,8 @@ class PicsSelectScreen(Screen):
                 "nature_images": self.nature_box.state
             }
 
-            print("Mindestens eine Checkbox ausgewählt")
             save_pics_lists(checkboxes)
         else:
-            print("Keine Checkbox ausgewählt")
             reset_selected_pics_lists()
             self.load_checkbox_statuses()
 
@@ -2221,7 +2217,6 @@ def which_theme():
         return dark
     else:
         return "not android"
-# endregion
 
 
 def get_theme_color(theme):
@@ -2243,6 +2238,7 @@ def get_theme_color(theme):
         theme_color = "color"
 
     return theme_color
+# endregion
 
 
 if __name__ == '__main__':

@@ -50,11 +50,9 @@ CLEARCOLOR_THEME = {
 
 
 class MyScatter(ScatterPlane):
-    print("MyScatter")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        print("MyScatter init")
         self.active_touches = set()
         self.do_translation = True
         self.do_scale = True
@@ -99,11 +97,9 @@ class MyScatter(ScatterPlane):
 
 
 class MyMemoryGrid(FloatLayout):
-    print("MyMemoryGrid")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        print("MyMemoryGrid init")
         self.start_pos = self.pos
         self.size[0] = Window.size[0]
         self.size[1] = Window.size[1] * 0.8
@@ -237,7 +233,6 @@ class LabelBackgroundColor(Label):
 
 
 class ButtonBackgroundColor(ButtonBehavior, Label):
-    print("ButtonBackgroundColor")
 
     def __init__(self, back_color=LIGHT_BLUE, text_color=WHITE, is_border=True, border_color=BEIGE, border_width=3, **kwargs):
         super().__init__(**kwargs)

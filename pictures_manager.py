@@ -16,10 +16,8 @@ default_pics = {
 
 # Einstellungen-Datei speichern
 def save_pics_lists(checkboxes):
-    # print("Bilderlisten werden gespeichert.")
     app = App.get_running_app()
     pics_lists_file_path = app.get_pics_lists_file_path()
-    # pics_lists = load_pics_lists()
     with open(pics_lists_file_path, 'r+') as file:
         try:
             file.seek(0)
@@ -35,7 +33,6 @@ def save_pics_lists(checkboxes):
 
 # Einstellungen-Datei laden
 def load_pics_lists():
-    print("Bilderlisten werden geladen.")
     app = App.get_running_app()
     pics_lists_file_path = app.get_pics_lists_file_path()
 
@@ -77,7 +74,6 @@ def load_pics_lists():
 
 
 def reset_selected_pics_lists():
-    print("Bilderlisten werden zurückgesetzt.")
     app = App.get_running_app()
     pics_lists_file_path = app.get_pics_lists_file_path()
 

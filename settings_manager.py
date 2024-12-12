@@ -39,7 +39,6 @@ default_settings = {
 
 # Einstellungen-Datei speichern
 def save_settings(new_setting):
-    print(f"Einstellungen ({new_setting}) werden gespeichert.")
     app = App.get_running_app()
     settings_file_path = app.get_settings_file_path()
     with open(settings_file_path, 'r+') as file:
@@ -47,7 +46,6 @@ def save_settings(new_setting):
             settings = json.load(file)
             if new_setting[0] in settings:
                 settings[new_setting[0]] = new_setting[1]
-                print(f"Einstellungen wurden geändert. {settings}")
                 file.seek(0)
                 json.dump(settings, file, indent=4)
                 file.truncate()
@@ -64,7 +62,6 @@ def save_settings(new_setting):
 
 # Einstellungen-Datei laden
 def load_settings():
-    print("Einstellungen werden geladen.")
     app = App.get_running_app()
     settings_file_path = app.get_settings_file_path()
 
@@ -101,7 +98,6 @@ def load_settings():
 
 # Einstellungen zurück auf Standardwerte setzen
 def reset_settings():
-    print("Einstellungen werden auf Standardwerte zurückgesetzt.")
     app = App.get_running_app()
     settings_file_path = app.get_settings_file_path()
     with open(settings_file_path, "w") as file:

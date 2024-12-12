@@ -27,7 +27,6 @@ default_scores = {
 
 # Highscore-Datei speichern
 def save_best_scores(highscores):
-    print("save_best_scores")
     app = App.get_running_app()
     score_file_path = app.get_score_file_path()
     with open(score_file_path, 'w') as file:
@@ -36,7 +35,6 @@ def save_best_scores(highscores):
 
 # Highscore-Datei laden
 def load_best_scores():
-    print("Highscores werden geladen.")
     app = App.get_running_app()
     score_file_path = app.get_score_file_path()
 
@@ -73,7 +71,6 @@ def load_best_scores():
 
 # Funktion zum Überprüfen und Aktualisieren der Highscores
 def update_best_scores(game_mode, difficulty, board_size, score):
-    print("Highscores werden aktualisiert.")
     if game_mode != "duell_standard":  # Bei Duell gibt es keine Highscore (bis jetzt zumindest).
         current_score = f"{game_mode}_{difficulty}_{board_size}"
         if game_mode == "time_race" or game_mode == "standard":
@@ -86,20 +83,17 @@ def update_best_scores(game_mode, difficulty, board_size, score):
             if score < highscores[current_score]:
                 highscores[current_score] = score
                 save_best_scores(highscores)
-                print(f"Neue Highscore {comparison} gespeichert.")
                 return True  # Neuer Highscore
         else:
             if score > highscores[current_score]:
                 highscores[current_score] = score
                 save_best_scores(highscores)
-                print(f"Neue Highscore {comparison} gespeichert.")
                 return True  # Neuer Highscore
         return False  # Kein neuer Highscore
     return False
 
 
 def reset_highscores():
-    print("Highscores werden zurückgesetzt")
     app = App.get_running_app()
     score_file_path = app.get_score_file_path()
 
