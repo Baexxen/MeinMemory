@@ -151,7 +151,6 @@ class MyMemoryApp(App):
     def on_start(self):
         logging.debug("App started")
         self.icon = "pics/icon.ico"
-        # self.root.current = "main_menu"
         Clock.schedule_once(self.force_redraw, 0.1)  # Eventuell eine leichte Verzögerung hinzufügen
         self.game_screen = self.root.get_screen("game")
         self.main_menu = self.root.get_screen("main_menu")
@@ -199,6 +198,12 @@ class MyMemoryApp(App):
             button.change_theme(self.theme_color)
         for label in self.label_list:
             label.change_theme(self.theme_color)
+        if self.root is not None:
+            for screen_name in self.root.screen_names:
+                screen = self.root.get_screen(screen_name)
+                if screen.app is None:
+                    screen.app = App.get_running_app()
+                screen.redraw()
 
     def load_settings(self, *args):
         settings = load_settings()
@@ -788,7 +793,6 @@ class Card(ButtonBehavior, Image):
         new_name = f"card_{self.value}.png"
         user_dir = self.app.user_data_dir
         combined_image_path = os.path.join(user_dir, new_name)
-        print(combined_image_path, " ####################")
         os.makedirs(os.path.dirname(combined_image_path), exist_ok=True)
         background.save(combined_image_path, format="PNG")
 
@@ -832,6 +836,7 @@ class GameScreen(Screen):
         self.current_highscore = 0
         self.current_difficulty = "easy"
         self.scatter.game_screen = self
+        self.memory_grid.game_screen = self
         self.game_over = True
         self.game_running = False
         self.current_game_mode = "standard"
@@ -857,6 +862,7 @@ class GameScreen(Screen):
         self.who_starts_screen = None
         self.card_flip_animation = "flip"
         self.flip_duration = 0
+        self.rect = Rectangle(size=self.size, pos=self.pos)
 
     def restart_game(self):
         self.load_settings()
@@ -892,7 +898,6 @@ class GameScreen(Screen):
 
         shuffle(self.app.pics_list)
         shuffle(card_values)
-        print(card_values)
         for value in card_values:
             card = Card(value)
             card.app = App.get_running_app()
@@ -1180,7 +1185,7 @@ class GameScreen(Screen):
         theme_color = get_theme_color(theme)
         if theme_color != self.theme_color:
             self.theme_color = theme_color
-            self.memory_grid.redraw(self.theme_color)
+            self.memory_grid.redraw()
             for card in self.card_list:
                 card.update_theme(self.theme_color)
 
@@ -1194,6 +1199,7 @@ class GameScreen(Screen):
         self.reset_widgets()
         self.reload_card_pics(dt="test")
         self.update()
+        self.redraw()
         if self.current_game_mode == "time_race" and self.time_race_running:
             self.start_time_count_up()
         return super().on_pre_enter()
@@ -1323,6 +1329,11 @@ class GameScreen(Screen):
                 card.source = card.pic
             else:
                 card.source = card.default_pic
+
+    def redraw(self):
+        with self.canvas.before:
+            Color(rgba=WINDOW_CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
 
 class MainMenuScreen(Screen):
@@ -2150,8 +2161,6 @@ class WhoStartsScreen(Screen):
         self.current_difficulty = "easy"
         self.current_board_size = "small"
         self.current_game_mode = "battle"
-        self.rect = Rectangle(size=self.size, pos=self.pos)
-        self.bind(pos=self.update_rect, size=self.update_rect)
         self.theme = "color"
         self.theme_color = "color"
         self.head_button.background_normal = "gfx/misc/Kopf.png"
@@ -2160,6 +2169,8 @@ class WhoStartsScreen(Screen):
         self.game_screen = None
         self.duell_screen = None
         self.pick = None
+        self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -2168,6 +2179,7 @@ class WhoStartsScreen(Screen):
     def on_pre_enter(self, *args):
         if not self.app:
             self.app = App.get_running_app()
+        self.theme_color = self.app.theme_color
         self.redraw()
 
     def redraw(self):

@@ -64,13 +64,14 @@ class MyScatter(ScatterPlane):
         self.touch_down_time = 0  # Zeit, wenn der erste Touch erkannt wurde
         self.game_screen = None
         self.touch_delay = 10
-
+        self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
-        # self.bind(pos=self.update_rect, size=self.update_rect)
+        self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+        # self.redraw()
 
     def on_touch_up(self, touch):
         self.touch_down_time = 0
@@ -95,6 +96,13 @@ class MyScatter(ScatterPlane):
     def get_settings(self):
         self.touch_delay = self.game_screen.touch_delay
 
+    def redraw(self):
+        self.theme_color = self.game_screen.theme_color
+        with self.canvas.before:
+            # self.canvas.clear()
+            Color(rgba=CLEARCOLOR_THEME[self.theme_color])
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
 
 class MyMemoryGrid(FloatLayout):
 
@@ -105,20 +113,24 @@ class MyMemoryGrid(FloatLayout):
         self.size[1] = Window.size[1] * 0.8
         self.start_size = self.size
         self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.bind(pos=self.update_rect, size=self.update_rect)
+        self.theme_color = "color"
 
     def update_rect(self, *args):
         self.size[0] = Window.size[0]
         self.size[1] = Window.size[1] * 0.8
         self.rect.pos = self.pos
         self.rect.size = self.size
+        # self.redraw()
 
     def reset(self, *args):
         self.pos = self.start_pos
         self.size = self.start_size
 
-    def redraw(self, theme_color):
+    def redraw(self):
         with self.canvas.before:
-            Color(rgba=CLEARCOLOR_THEME[theme_color])
+            self.theme_color = self.game_screen.theme_color
+            Color(rgba=CLEARCOLOR_THEME[self.theme_color])
             self.rect = Rectangle(size=self.size, pos=self.pos)
 
 
