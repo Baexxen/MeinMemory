@@ -395,6 +395,7 @@
     card_flip_animation_label: card_flip_animation_label
     card_flip_animation_flip_button: card_flip_animation_flip_button
     card_flip_animation_zoom_button: card_flip_animation_zoom_button
+    card_flip_animation_none_button:card_flip_animation_none_button
     lang_label: lang_label
     lang_btn_en: lang_btn_en
     lang_btn_de: lang_btn_de
@@ -488,6 +489,12 @@
                 id: card_flip_animation_zoom_button
                 on_release:
                     root.update_card_flip_animation_buttons(1)
+            ButtonBackgroundColor:
+                text: "Kein-Effekt"
+                size_hint: 0.2, 1
+                id: card_flip_animation_none_button
+                on_release:
+                    root.update_card_flip_animation_buttons(2)
         BoxLayout:
             orientation: "horizontal"
             padding: (5, 5, 5, 5)
@@ -624,8 +631,6 @@
     own_landscapes_box: own_landscapes_box
     sexy_label: sexy_label
     sexy_box: sexy_box
-    random_label: random_label
-    random_box: random_box
     nature_label: nature_label
     nature_box: nature_box
     reset_btn: reset_btn
@@ -712,22 +717,6 @@
                 size_hint: 0.8, 1
             CheckBox:
                 id: sexy_box
-                size_hint: 0.2, 1
-                background_normal: ""
-                background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"
-                background_checkbox_down: "gfx/misc/checkbox_checked_color.png"
-                on_release:
-                    root.save_pics_lists_screen()
-        BoxLayout:
-            orientation: "horizontal"
-            size_hint: 0.7, 1
-            spacing: 1
-            LabelBackgroundColor:
-                id: random_label
-                text: "Verschiedenes"
-                size_hint: 0.8, 1
-            CheckBox:
-                id: random_box
                 size_hint: 0.2, 1
                 background_normal: ""
                 background_checkbox_normal: "gfx/misc/checkbox_unchecked_color.png"

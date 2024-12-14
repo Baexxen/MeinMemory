@@ -9,7 +9,6 @@ default_pics = {
     "sport_images": "down",
     "own_landscape_images": "normal",
     "sexy_images": "normal",
-    "random_images": "down",
     "nature_images": "down"
 }
 

@@ -43,6 +43,7 @@
     "card_flip_animation_label": "Animation of Cards:",
     "flip_animation_btn": "Flip",
     "zoom_animation_btn": "Zoom",
+    "none_animation_btn": "None",
     "language": "Language:",
     "english": "English",
     "deutsch": "Deutsch",

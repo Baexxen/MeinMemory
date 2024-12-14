@@ -115,7 +115,6 @@ class MyMemoryApp(App):
         self.sport_images = []
         self.own_landscape_images = []
         self.sexy_images = []
-        self.random_images = []
         self.nature_images = []
         self.theme = "color"
         self.theme_color = "color"
@@ -237,9 +236,6 @@ class MyMemoryApp(App):
         if all_pics_lists["sexy_images"] == "down":
             self.pics_list.extend(self.sexy_images)
             lists_selected += 1
-        if all_pics_lists["random_images"] == "down":
-            self.pics_list.extend(self.random_images)
-            lists_selected += 1
         if all_pics_lists["nature_images"] == "down":
             self.pics_list.extend(self.nature_images)
             lists_selected += 1
@@ -261,9 +257,6 @@ class MyMemoryApp(App):
             if all_pics_lists["sexy_images"] == "down":
                 self.pics_list.extend(self.sexy_images)
                 lists_selected += 1
-            if all_pics_lists["random_images"] == "down":
-                self.pics_list.extend(self.random_images)
-                lists_selected += 1
             if all_pics_lists["nature_images"] == "down":
                 self.pics_list.extend(self.nature_images)
                 lists_selected += 1
@@ -278,7 +271,6 @@ class MyMemoryApp(App):
             "pics/Sport": self.sport_images,
             "pics/EigeneLandschaften": self.own_landscape_images,
             "pics/Sexy": self.sexy_images,
-            "pics/Verschiedenes": self.random_images,
             "pics/Natur": self.nature_images
         }
 
@@ -631,11 +623,17 @@ class Card(ButtonBehavior, Image):
         self.zoom_event = None
         self.shrink_event = None
         # Startet das Zoom-Event
-        self.flip_step = self.card_size_base[0] / self.flip_steps
-        self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom(), self.animation_delay)
+        if self.flip_animation != "none":
+            self.flip_step = self.card_size_base[0] / self.flip_steps
+            self.zoom_event = Clock.schedule_interval(lambda dt: self.zoom(), self.animation_delay)
+        else:
+            if self.flipped:
+                self.source = self.pic
 
     def zoom(self):
         if self.flip_animation == "zoom":
+            if self.flipped and self.source != self.pic:
+                self.source = self.pic
             if self.size[0] < self.card_size_max[0]:
                 self.size = (self.size[0] + self.zoom_step, self.size[1] + self.zoom_step)
                 self.pos = (self.pos[0] - self.pos_step, self.pos[1] - self.pos_step)
@@ -1045,9 +1043,11 @@ class GameScreen(Screen):
 
     def flip_card(self, card):
         print("flip_card")
-        card.clicked()
         first_card = card
         first_card.flipped = True
+        print(f"Card_Flipped: {first_card.flipped}; Card_Animation: {first_card.flip_animation}")
+        card.clicked()
+
         self.ai.remember_card(first_card)
         second_card = None
 
@@ -1688,6 +1688,7 @@ class SettingsScreen(Screen):
     card_flip_animation_label = ObjectProperty(None)
     card_flip_animation_flip_button = ObjectProperty(None)
     card_flip_animation_zoom_button = ObjectProperty(None)
+    card_flip_animation_none_button = ObjectProperty(None)
     lang_label = ObjectProperty(None)
     lang_btn_en = ObjectProperty(None)
     lang_btn_de = ObjectProperty(None)
@@ -1749,6 +1750,7 @@ class SettingsScreen(Screen):
         self.card_flip_animation_label.text = self.app.translator.gettext("card_flip_animation_label")
         self.card_flip_animation_flip_button.text = self.app.translator.gettext("flip_animation_btn")
         self.card_flip_animation_zoom_button.text = self.app.translator.gettext("zoom_animation_btn")
+        self.card_flip_animation_none_button.text = self.app.translator.gettext("none_animation_btn")
         self.lang_label.text = self.app.translator.gettext("language")
         self.lang_btn_en.text = self.app.translator.gettext("english")
         self.lang_btn_de.text = self.app.translator.gettext("deutsch")
@@ -1837,6 +1839,8 @@ class SettingsScreen(Screen):
             card_flip_button = 0
         elif self.card_flip_animation == "zoom":
             card_flip_button = 1
+        elif self.card_flip_animation == "none":
+            card_flip_button = 2
         self.update_card_flip_animation_buttons(card_flip_button)
         lang_button = 0
         if self.lang == "de":
@@ -1894,11 +1898,18 @@ class SettingsScreen(Screen):
         if button_id == 0:
             self.card_flip_animation_flip_button.disabled = True
             self.card_flip_animation_zoom_button.disabled = False
+            self.card_flip_animation_none_button.disabled = False
             self.card_flip_animation = "flip"
         elif button_id == 1:
             self.card_flip_animation_flip_button.disabled = False
             self.card_flip_animation_zoom_button.disabled = True
+            self.card_flip_animation_none_button.disabled = False
             self.card_flip_animation = "zoom"
+        elif button_id == 2:
+            self.card_flip_animation_flip_button.disabled = False
+            self.card_flip_animation_zoom_button.disabled = False
+            self.card_flip_animation_none_button.disabled = True
+            self.card_flip_animation = "none"
 
         new_setting = ("card_flip_animation", self.card_flip_animation)
         save_settings(new_setting)
@@ -2029,8 +2040,6 @@ class PicsSelectScreen(Screen):
     own_landscapes_box = ObjectProperty()
     sexy_label = ObjectProperty()
     sexy_box = ObjectProperty()
-    random_label = ObjectProperty()
-    random_box = ObjectProperty()
     nature_label = ObjectProperty()
     nature_box = ObjectProperty()
     reset_btn = ObjectProperty()
@@ -2043,9 +2052,8 @@ class PicsSelectScreen(Screen):
         self.sport_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.own_landscapes_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.sexy_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.random_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
         self.nature_label.redraw(LIGHT_BLUE, BEIGE, True, BEIGE, 5)
-        self.checkbox_list = [self.akira_box, self.cars_box, self.sport_box, self.own_landscapes_box, self.sexy_box, self.random_box, self.nature_box]
+        self.checkbox_list = [self.akira_box, self.cars_box, self.sport_box, self.own_landscapes_box, self.sexy_box, self.nature_box]
         self.theme_color = "color"
         self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -2065,7 +2073,6 @@ class PicsSelectScreen(Screen):
         self.sport_label.text = self.app.translator.gettext("sport_label")
         self.own_landscapes_label.text = self.app.translator.gettext("own_landscapes_label")
         self.sexy_label.text = self.app.translator.gettext("sexy_label")
-        self.random_label.text = self.app.translator.gettext("random_label")
         self.nature_label.text = self.app.translator.gettext("nature_label")
 
     def save_pics_lists_screen(self):
@@ -2081,8 +2088,6 @@ class PicsSelectScreen(Screen):
             pics_selected += 1
         if self.sexy_box.state == "down":
             pics_selected += 1
-        if self.random_box.state == "down":
-            pics_selected += 1
         if self.nature_box.state == "down":
             pics_selected += 1
 
@@ -2093,7 +2098,6 @@ class PicsSelectScreen(Screen):
                 "sport_images": self.sport_box.state,
                 "own_landscape_images": self.own_landscapes_box.state,
                 "sexy_images": self.sexy_box.state,
-                "random_images": self.random_box.state,
                 "nature_images": self.nature_box.state
             }
 
@@ -2110,7 +2114,6 @@ class PicsSelectScreen(Screen):
         self.sport_box.state = checkboxes["sport_images"]
         self.own_landscapes_box.state = checkboxes["own_landscape_images"]
         self.sexy_box.state = checkboxes["sexy_images"]
-        self.random_box.state = checkboxes["random_images"]
         self.nature_box.state = checkboxes["nature_images"]
 
     def update_checkbox_theme(self):
@@ -2142,7 +2145,6 @@ class PicsSelectScreen(Screen):
         self.sport_box.state = checkboxes["sport_images"]
         self.own_landscapes_box.state = checkboxes["own_landscape_images"]
         self.sexy_box.state = checkboxes["sexy_images"]
-        self.random_box.state = checkboxes["random_images"]
         self.nature_box.state = checkboxes["nature_images"]
 
         self.save_pics_lists_screen()

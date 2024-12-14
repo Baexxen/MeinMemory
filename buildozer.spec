@@ -29,7 +29,7 @@ source.exclude_dirs = .venv,bin
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.592
+version = 0.593
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -44,7 +44,7 @@ requirements = python3,kivy,pillow
 # requirements.source.kivy = ../../kivy
 
 # (str) Presplash of the application
-presplash.filename = %(source.dir)s/pics/Sexy/sexy_9.png
+presplash.filename = %(source.dir)s/pics/Default.png
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/pics/icon.ico
