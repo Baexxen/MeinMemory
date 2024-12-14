@@ -1064,10 +1064,10 @@ class GameScreen(Screen):
 
         if second_card is not None:
             if first_card.value == second_card.value:
+                print("Paar gefunden")
                 self.input_enabled = False
                 if self.current_player == self.player:
                     self.player.increment_turns()
-                print("Paar gefunden")
                 self.kill_cards(first_card, second_card)
                 if self.current_game_mode == "battle" or self.current_game_mode == "duell_standard":
                     self.current_player.increase_score(1)

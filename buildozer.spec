@@ -22,7 +22,7 @@ source.include_exts = py,png,jpg,kv,atlas,json
 source.exclude_exts = .gitignore,build_app.py,debug.log,dropbox_backup.py,pic_transform.py
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-source.exclude_dirs = .venv,bin
+# source.exclude_dirs = .venv,bin
 
 # (list) List of exclusions using pattern matching
 # Do not prefix with './'
