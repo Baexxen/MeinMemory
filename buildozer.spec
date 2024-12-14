@@ -19,7 +19,7 @@ source.include_exts = py,png,jpg,kv,atlas,json
 #source.include_patterns = assets/*,images/*.png
 
 # (list) Source files to exclude (let empty to not exclude anything)
-source.exclude_exts = .gitignore,build_app.py,debug.log,dropbox_backup.py,pic_transform.py
+# source.exclude_exts = .gitignore,build_app.py,debug.log,dropbox_backup.py,pic_transform.py
 
 # (list) List of directory to exclude (let empty to not exclude anything)
 # source.exclude_dirs = .venv,bin
