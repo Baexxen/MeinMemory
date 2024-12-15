@@ -44,7 +44,7 @@ LABEL_THEMES = {
 
 CLEARCOLOR_THEME = {
     "light": ORANGE,
-    "dark": DARK_BLUE,
+    "dark": BLACK,
     "color": LIGHT_BLUE
 }
 
