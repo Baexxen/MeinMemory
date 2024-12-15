@@ -755,19 +755,9 @@ class Card(ButtonBehavior, Image):
 
         if self.theme_color != theme_color:
             self.theme_color = theme_color
-            pic = self.generate_combined_image(self.pic_source, self.pic_background_color)
-            self.remove_from_cache()
-            self.pic = pic
-            # self.source = self.pic
-            Clock.schedule_once(self.reload_image, 0.1)
-
-    def reload_image(self, dt):
-        self.source = self.pic
-        self.remove_from_cache()
-        self.reload()
-        if self.disabled or self.flipped:
+            self.generate_combined_image(self.pic_source, self.pic_background_color)
             self.source = self.pic
-        else:
+            self.remove_from_cache()
             self.source = self.default_pic
 
     def generate_combined_image(self, pic, background_color):
@@ -817,10 +807,7 @@ class Card(ButtonBehavior, Image):
         os.makedirs(os.path.dirname(combined_image_path), exist_ok=True)
         background.save(combined_image_path, format="PNG")
 
-        self.remove_from_cache()
         self.pic = combined_image_path
-        self.pic_source = pic
-        return combined_image_path
 
 
 # region Screens #################################################################################################
@@ -1008,18 +995,18 @@ class GameScreen(Screen):
         for card in self.card_list:
             if card.pic not in generated_pics:
                 generated_pics.append(card.pic)
-                pic = card.generate_combined_image(card.pic, card.pic_background_color)
+                card.generate_combined_image(card.pic, card.pic_background_color)
             else:
                 new_name = f"card_{card.value}.png"
                 user_dir = self.app.user_data_dir
                 combined_image_path = os.path.join(user_dir, new_name)
                 if os.path.exists(combined_image_path):
-                    pic = combined_image_path
+                    card.pic = combined_image_path
                 else:
-                    pic = card.generate_combined_image(card.pic, card.pic_background_color)
+                    card.generate_combined_image(card.pic, card.pic_background_color)
+            card.source = card.pic
             card.remove_from_cache()
-            card.pic = pic
-        Clock.schedule_once(self.reload_card_pics, 0.1)
+            card.source = card.default_pic
 
     def update_card_pos_and_size(self):
         # Fenstergröße und Kartenanzahl ermitteln
@@ -1229,7 +1216,6 @@ class GameScreen(Screen):
     def on_pre_enter(self, *args):
         self.load_settings()
         self.reset_widgets()
-        Clock.schedule_once(self.reload_card_pics)
         self.update()
         self.redraw()
         if self.current_game_mode == "time_race" and self.time_race_running:
@@ -1353,14 +1339,6 @@ class GameScreen(Screen):
             card.remove_from_cache()
             if card not in self.card_list:
                 del card
-
-    def reload_card_pics(self, dt):
-        for card in self.card_list:
-            card.remove_from_cache()
-            if card.disabled or card.flipped:
-                card.source = card.pic
-            else:
-                card.source = card.default_pic
 
     def redraw(self):
         with self.canvas.before:
