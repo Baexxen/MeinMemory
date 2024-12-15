@@ -73,6 +73,11 @@ CARD_COVER_THEME = {
     "dark": "pics/Default_dark.png",
     "color": "pics/Default.png"
 }
+CARD_BORDER_COLOR = {
+    "light": (255, 196, 150, 255),  # Beige
+    "dark": (10, 69, 82, 255),  # Dark Blue
+    "color": (242, 179, 54, 255)  # Orange
+}
 BOARD_SIZES = {
     "small": 16,
     "medium": 24,
@@ -576,10 +581,11 @@ class AI(Player):
 class Card(ButtonBehavior, Image):
     instances = []
 
-    def __init__(self, value, **kwargs):
+    def __init__(self, value, theme_color, **kwargs):
         super().__init__(**kwargs)
         Card.instances.append(self)
         self.value = value
+        self.theme_color = theme_color
         self.flipped = False
         self.background_normal = ""
         self.instance = self
@@ -605,9 +611,8 @@ class Card(ButtonBehavior, Image):
         self.pic = None
         self.pic_source = None
         self.flip_animation = "flip"
-        self.source = "pics/Default.png"
+        self.source = CARD_COVER_THEME[self.theme_color]
         self.pic_background_color = (242, 179, 54)  # Orange
-        self.theme_color = "color"
         self.background_disabled_normal = self.pic
         self.background_down = self.pic
         self.app = None
@@ -644,7 +649,7 @@ class Card(ButtonBehavior, Image):
                     self.zoom_event = None
                 if self.shrink_event:
                     Clock.unschedule(self.shrink_event)
-
+                    self.shrink_event = None
                 # Shrink-Event starten
                 if self.flipped:
                     self.source = self.pic
@@ -658,8 +663,10 @@ class Card(ButtonBehavior, Image):
                 self.source = self.pic if self.source == self.default_pic else self.default_pic
                 if self.zoom_event:
                     Clock.unschedule(self.zoom_event)
+                    self.zoom_event = None
                 if self.shrink_event:
                     Clock.unschedule(self.shrink_event)
+                    self.shrink_event = None
                 self.shrink_event = Clock.schedule_interval(lambda dt: self.shrink(), self.animation_delay)
 
     def shrink(self):
@@ -672,7 +679,7 @@ class Card(ButtonBehavior, Image):
                     Clock.unschedule(self.shrink_event)
                     self.shrink_event = None
                 self.size = self.card_size_base
-                self.game_screen.update()
+                # self.game_screen.update()
 
         elif self.flip_animation == "flip":
             if self.width < self.card_size_base[0]:
@@ -694,6 +701,10 @@ class Card(ButtonBehavior, Image):
         return super().on_touch_move(touch)
 
     def on_touch_up(self, touch):
+        if self.zoom_event or self.shrink_event:
+            super().on_touch_up(touch)
+            return False
+
         if self.flipped:
             super().on_touch_up(touch)
             return False
@@ -731,11 +742,11 @@ class Card(ButtonBehavior, Image):
 
     def set_background_color(self, theme_color):
         if theme_color == "light":
-            self.pic_background_color = (255, 196, 150)  # Beige
+            self.pic_background_color = (255, 255, 255)  # White
         elif theme_color == "dark":
             self.pic_background_color = (0, 0, 0)  # Black
         elif theme_color == "color":
-            self.pic_background_color = (242, 179, 54)  # Orange
+            self.pic_background_color = (20, 138, 163)  # Light Blue
         if not DEBUGGING:
             self.default_pic = CARD_COVER_THEME[theme_color]
 
@@ -747,12 +758,13 @@ class Card(ButtonBehavior, Image):
             pic = self.generate_combined_image(self.pic_source, self.pic_background_color)
             self.remove_from_cache()
             self.pic = pic
-            self.source = self.pic
+            # self.source = self.pic
             Clock.schedule_once(self.reload_image, 0.1)
 
     def reload_image(self, dt):
+        self.source = self.pic
         self.remove_from_cache()
-        # self.reload()
+        self.reload()
         if self.disabled or self.flipped:
             self.source = self.pic
         else:
@@ -787,6 +799,16 @@ class Card(ButtonBehavior, Image):
 
         # Kombiniere das skalierte Bild mit dem Hintergrund
         background.paste(scaled_image, (offset_x, offset_y), None)
+
+        # Zeichne den Rahmen
+        border_color = CARD_BORDER_COLOR[self.theme_color]
+        border_width = 5
+        draw = ImageDraw.Draw(background)
+        draw.rectangle(
+            [(0, 0), (gen_size[0] - 1, gen_size[1] - 1)],
+            outline=border_color,
+            width=border_width
+        )
 
         # Speichere das Bild in einem temporären Pfad
         new_name = f"card_{self.value}.png"
@@ -897,7 +919,7 @@ class GameScreen(Screen):
         shuffle(self.app.pics_list)
         shuffle(card_values)
         for value in card_values:
-            card = Card(value)
+            card = Card(value, self.theme_color)
             card.app = App.get_running_app()
             self.memory_grid.add_widget(card)
             card.parent = card.get_scatter_parent()
@@ -910,6 +932,8 @@ class GameScreen(Screen):
             card.set_background_color(self.theme_color)
             if DEBUGGING:
                 card.default_pic = card.pic
+            else:
+                card.default_pic = CARD_COVER_THEME[self.theme_color]
             self.card_list.append(card)
 
         self.game_over = False
@@ -1004,6 +1028,8 @@ class GameScreen(Screen):
         total_cards = len(self.card_list)
         cols = 4
         rows = 4
+
+        # Anpassung der Spalten und Reihen basierend auf der Kartenanzahl
         if total_cards == BOARD_SIZES["small"]:
             cols = 4
             rows = 4
@@ -1014,11 +1040,13 @@ class GameScreen(Screen):
             cols = 5
             rows = 6
         self.cols = cols
-        # Berechne die Kartengröße auf Basis der Spalten und Reihen
-        card_width = window_width / cols
-        card_height = window_height / rows
+
+        # Berechnung der Kartengröße, inklusive 1 Pixel Abstand
+        card_width = (window_width - (cols - 1)) / cols
+        card_height = (window_height - (rows - 1)) / rows
         self.card_size_base = (card_width, card_height)
         self.card_size_max = (card_width + self.card_zoom_factor, card_height + self.card_zoom_factor)
+
         # Weise jeder Karte die berechnete Größe und Position zu
         for i, card in enumerate(self.card_list):
             card.size_hint = (None, None)
@@ -1029,9 +1057,11 @@ class GameScreen(Screen):
             # Kartenposition auf Basis von Spalte und Reihe bestimmen
             row = i // cols
             col = i % cols
-            card.pos = (col * card_width, window_height - (row + 1) * card_height)
-            card.starting_pos = (col * card_width, window_height - (row + 1) * card_height)
-            # card.update_theme(self.theme_color)
+            card.pos = (
+                col * (card_width + 1),  # 1 Pixel Abstand zwischen den Karten horizontal
+                window_height - (row + 1) * (card_height + 1)  # 1 Pixel Abstand zwischen den Karten vertikal
+            )
+            card.starting_pos = card.pos
             card.flip_animation = self.card_flip_animation
 
     def on_touch_down(self, touch):
@@ -1199,7 +1229,7 @@ class GameScreen(Screen):
     def on_pre_enter(self, *args):
         self.load_settings()
         self.reset_widgets()
-        self.reload_card_pics(dt="test")
+        Clock.schedule_once(self.reload_card_pics)
         self.update()
         self.redraw()
         if self.current_game_mode == "time_race" and self.time_race_running:
