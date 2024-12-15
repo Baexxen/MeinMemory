@@ -18,6 +18,7 @@ from random import shuffle, randint
 from math import sqrt
 from jnius import autoclass
 from PIL import Image as PILImage, ImageDraw
+from threading import Thread
 import os
 import logging
 import time
@@ -751,7 +752,7 @@ class Card(ButtonBehavior, Image):
 
     def reload_image(self, dt):
         self.remove_from_cache()
-        self.reload()
+        # self.reload()
         if self.disabled or self.flipped:
             self.source = self.pic
         else:
@@ -796,7 +797,6 @@ class Card(ButtonBehavior, Image):
 
         self.remove_from_cache()
         self.pic = combined_image_path
-        self.source = self.pic
         self.pic_source = pic
         return combined_image_path
 
@@ -933,7 +933,9 @@ class GameScreen(Screen):
         self.game_over_label.hide = True
         self.game_over_label.opacity = 0
         self.game_over_label.font_size = FONT_SIZE_LARGE
-        self.generate_new_images()
+
+        thread = Thread(target=self.generate_new_images)
+        thread.start()
 
     def update(self):
         print("GameScreen: update")
