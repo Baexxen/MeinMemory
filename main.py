@@ -50,7 +50,18 @@ from kivy.uix.checkbox import CheckBox
 
 
 # Global variables initialization
-logging.basicConfig(level=logging.DEBUG)
+# Logging-Grundkonfiguration
+logging.basicConfig(
+    level=logging.DEBUG,  # Setze das minimale Log-Level
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+# Logger für die KI erstellen
+ai_logger = logging.getLogger("AI_LOGIC")
+ai_logger.setLevel(logging.DEBUG)
+# Logger für allgemeine Meldungen
+general_logger = logging.getLogger("GENERAL")
+
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 WHITE = (1, 1, 1, 1)
@@ -332,8 +343,8 @@ class AI(Player):
         super().__init__(name)
         self.difficulty = difficulty
         self.card_grid = []
-        self.active_cards = []  # Liste aller Karten
-        self.known_cards = {}  # Set mit Karten, die schon aufgedeckt waren
+        self.active_cards = list()  # Liste aller Karten
+        self.known_cards = list()
         self.safe_call_cards = {}  # Set, um Karten zu speichern, die schon mehrfach aufgedeckt wurden.
         self.app = App.get_running_app()
         self.game_screen = None
@@ -345,85 +356,96 @@ class AI(Player):
         self.players_last_cards = []
 
     def select_first_card(self, players_last_cards):
-        print(f"KI {self.difficulty} sucht erste Karte")
-        self.error = False
         self.players_last_cards = players_last_cards
-        first_card = None
+        found_cards = []
         self.active_cards = self.game_screen.card_list.copy()
-        # ###########################################################################################################################################################################################################
-        if self.difficulty == "easy":
-            shuffle(self.active_cards)
-            for card in self.active_cards:
-                if not card.disabled and not card.flipped:  # Wähle eine zufällige Karte, die noch nicht aufgedeckt ist.
-                    first_card = card
-                    break
-            if not first_card:
+        ai_logger.debug(f"KI {self.difficulty} sucht erste Karte: Known_Cards: {len(self.known_cards)}, Active_Cards: {len(self.active_cards)}#################################################################")
+        known_pair = self.check_for_known_pair()
+        if len(known_pair) > 1:
+            ai_logger.debug(f"Known_Pair > 1: {known_pair}")
+            first_card = known_pair[0]
+            second_card = known_pair[1]
+            found_cards.append(second_card)
+        else:
+            if self.difficulty == "hard" or self.difficulty == "impossible":
+                first_card = self.find_smart_first_card()
+                if not first_card:
+                    first_card = self.find_any_card()
+            else:
                 first_card = self.find_any_card()
 
-        # ###########################################################################################################################################################################################################
-        else:
-            known_pair = self.check_for_known_pair()  # Gibt es schon ein bekanntes Paar?
-            if known_pair:
-                first_card = known_pair[randint(0, 1)]
-            else:
-                # ###########################################################################################################################################################################################################
-                if self.difficulty == "medium":
-                    first_card = self.find_any_card()  # Wähle bevorzugt eine Karte, die nicht zuletzt vom Spieler aufgedeckt wurde.
-                # ###########################################################################################################################################################################################################
-                elif self.difficulty == "hard" or self.difficulty == "impossible":
-                    shuffle(self.active_cards)
-                    for card in self.active_cards:
-                        if not card.disabled:
-                            if card not in self.known_cards:  # Bevorzugt eine Karte aufdecken, die noch nicht vorher aufgedeckt wurde.
-                                first_card = card
-                                break
-                    if not first_card:
-                        first_card = self.find_any_card()
-
         if first_card:
+            found_cards.append(first_card)
+            ai_logger.debug(f"KI {self.difficulty} hat erste Karte ({first_card.value}) gefunden.")
             self.remember_card(first_card)
-            return first_card
+            return found_cards
         else:
-            print("'first_card' nicht gefunden.")
+            ai_logger.error("KI hat keine erste Karte gefunden.")
             return None
 
-    def select_second_card(self, first_card):
-        print(f"KI sucht zweite Karte")
-        self.error = False
+    def find_smart_first_card(self):
+        self.active_cards = self.game_screen.card_list.copy()
+        shuffle(self.active_cards)
+        for card in self.active_cards:
+            if card not in self.known_cards:
+                if not card.disabled:
+                    if not card.flipped:
+                        if card.flip_count == 0:
+                            ai_logger.debug("Smart_First_Card gefunden")
+                            self.remember_card(card)
+                            return card
+        ai_logger.debug("Keine Smart_First_Card gefunden.")
+        return None
+
+    def select_second_card(self, found_cards):
+        ai_logger.debug(f"KI sucht zweite Karte####################################################")
+        if len(found_cards) > 0:
+            first_card = found_cards[0]
+        else:
+            ai_logger.error(f"found_cards <= 0.")
+            return None
+
+        if len(found_cards) > 1:
+            second_card = found_cards[1]
+            ai_logger.debug(f"Zweite Karte wurde bereits gefunden.")
+            return second_card
+
         second_card = None
         self.active_cards = self.game_screen.card_list.copy()
         self.error = self.do_error()
 
-        known_pair = self.find_match(first_card)
-        print(f"Es wird nach bekanntem Paar gesucht...")
-        if known_pair:
-            print(f"Bekanntes Paar gefunden ({known_pair})")
-            for card in known_pair:
-                if not card.flipped:
+        matched_cards = self.find_match(first_card)
+        if matched_cards:
+            for card in matched_cards:
+                if not card == first_card:
                     second_card = card
-                    print(f"second_card = {second_card.value}")
-                    break
-        else:
-            if self.difficulty == "easy" or self.difficulty == "medium":
-                print(f"Kein bekanntes Paar gefunden. AI:'{self.difficulty}' KI sucht zufällige Karte aus...")
+                    ai_logger.debug(f"KI {self.difficulty} hat ein Paar zur ersten Karte gefunden.")
+
+        if self.difficulty == "easy" or self.difficulty == "medium":
+            if not second_card:
+                ai_logger.debug(f"Kein bekanntes Paar gefunden. AI:'{self.difficulty}' KI sucht zufällige Karte aus...")
                 second_card = self.find_any_card()
 
-            elif self.difficulty == "hard" or self.difficulty == "impossible":
-                print(f"Kein bekanntes Paar gefunden. AI {self.difficulty} sucht Karte aus, die zuvor schon aufgedeckt wurde.")
-                shuffle(self.active_cards)
+        elif self.difficulty == "hard" or self.difficulty == "impossible":
+            ai_logger.debug(f"Kein bekanntes Paar gefunden. AI {self.difficulty} sucht Karte aus, die zuvor schon aufgedeckt wurde.")
+            self.active_cards = self.game_screen.card_list.copy()
+            if not second_card:
                 for card in self.active_cards:
-                    if card != first_card and not card.disabled and not card.flipped:
+                    if card != first_card and not card.disabled and not card.flipped and card.flip_count > 0:
                         second_card = card
+                        ai_logger.debug(f"KI {self.difficulty} hat bereits aufgedeckte Karte gefunden")
                         break
                 if not second_card:
+                    ai_logger.error(f"KI {self.difficulty} konnte keine bereits aufgedeckte Karte finden.")
                     second_card = self.find_any_card()
 
         if not self.error:
             if second_card:
+                ai_logger.debug(f"KI {self.difficulty} hat zweite Karte gefunden: {second_card.value}")
                 self.remember_card(second_card)
                 return second_card
             else:
-                print("'second_card' nicht gefunden.")
+                ai_logger.error("'second_card' nicht gefunden. Werde zufällige Karte suchen...")
                 return self.find_any_card()  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist.
         else:
             second_card = self.find_wrong_card_nearby(first_card, second_card)  # Wenn ein Fehler gemacht werden soll, wird eine falsche Karte in der Nähe der eigentlich richtigen Karte gesucht.
@@ -431,59 +453,76 @@ class AI(Player):
                 self.remember_card(second_card)
                 return second_card
             else:
-                print("'second_card' nicht gefunden.")
+                ai_logger.error("'wrong_card_nearby' nicht gefunden. Werde zufällige Karte suchen...")
                 return self.find_any_card()  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist.
 
     def remember_card(self, card):
+        if card in self.known_cards:
+            return
+
         do_error = self.do_error()
         if not do_error or card.flip_count > self.save_call_threshold:  # KI merkt sich eine Karte nur, wenn sie keinen Fehler machen soll, oder die Karte schon öfter aufgedeckt wurde.
-            print(f"KI merkt sich Karte {card.value}.")
-            if card.value in self.known_cards:
-                self.known_cards[card.value].add(card)  # Wenn Karte mit diesem Wert shon gespeichert ist, wird sie diesem Set hinzugefügt (falls nicht schon vorhanden)
+            ai_logger.debug(f"KI {self.difficulty} merkt sich Karte {card.value}.")
+            if card not in self.known_cards:
+                self.known_cards.append(card)
             else:
-                self.known_cards[card.value] = {card}  # Sonst wird ein neues Set angelegt.
+                ai_logger.error(f"Karte war doch schon in 'self.known_cards'")
+        else:
+            ai_logger.debug(f"KI {self.difficulty} kann sich Karte nicht merken. ;-)")
 
     def find_match(self, card):
         pair_list = []  # Hilfsliste, um kein 'Set' auszugeben.
-        if card.value in self.known_cards and len(self.known_cards[card.value]) == 2:  # Wenn zwei Karten mit gleichen Werten gespeichert sind ...
-            print(f"Es wurde ein Paar ({card.value}) gefunden")
-            for known_card in self.known_cards[card.value]:
-                pair_list.append(known_card)
-            return pair_list  # Werden diese als Liste, nicht als Set, ausgegeben.
+        if card in self.known_cards:
+            for known_card in self.known_cards:
+                if known_card == card:
+                    pair_list.append(known_card)
+                if known_card != card:
+                    if known_card.value == card.value:
+                        pair_list.append(known_card)
+            if len(pair_list) == 2:
+                ai_logger.debug(f"Find_Match erfolgreich: Pair_List: {pair_list}")
+                return pair_list  # Werden diese als Liste, nicht als Set, ausgegeben.
         return None
 
-    def remove_pair(self, card):
-        if card.value in self.known_cards and len(self.known_cards[card.value]) == 2:
-            print(f"card {card.value} aus 'KI-Gedächtnis' gelöscht")
-            del self.known_cards[card.value]
+    def remove_pair(self, first_card, second_card):
+        ai_logger.debug(f"Known_Cards: {len(self.known_cards)}")
+        for known_card in self.known_cards:
+            if known_card == first_card or known_card == second_card:
+                ai_logger.debug(f"Card {known_card.value} wird entfernt.")
+                self.known_cards.remove(known_card)
+            else:
+                continue
+
+        ai_logger.debug(f"Known_Cards: {len(self.known_cards)}")
 
     def check_for_known_pair(self):
-        print("KI sucht nach bekannten Paaren")
+        ai_logger.debug("KI sucht nach bekannten Paaren")
         if len(self.players_last_cards) > 0:  # Erst prüfen, ob es ein bekanntes Kartenpaar von den Karten gibt, die der Spieler zuletzt aufgedeckt hat :-)
             for card in self.players_last_cards:
                 known_pair = self.find_match(card)
                 if known_pair:
                     return known_pair
+        ai_logger.debug(f"Find_Match nicht erfolgreich. (last cards: {len(self.players_last_cards)}")
 
         if len(self.known_cards) > 0:  # Gibt es schon bekannte Karten?
             for card in self.active_cards:  # Gibt es schon ein bekanntes Paar?
                 known_pair = self.find_match(card)
                 if known_pair:
                     return known_pair
-        print("Es wurde kein bekanntes Paar gefunden")
-        return None
+        ai_logger.debug(f"Find_Match nicht erfolgreich. (known cards: {len(self.known_cards)}")
+        return list()
 
     def do_error(self):
         error = randint(1, 100)
         if error > self.base_error_probability:
-            print(f"KI ({self.difficulty}) macht keinen Fehler. ({error}/{self.base_error_probability})")
+            ai_logger.debug(f"KI ({self.difficulty}) macht keinen Fehler. ({error}/{self.base_error_probability})")
             return False
         else:
-            print(f"KI ({self.difficulty}) macht absichtlichen Fehler. ({error}/{self.base_error_probability})")
+            ai_logger.debug(f"KI ({self.difficulty}) macht Fehler. ({error}/{self.base_error_probability})")
             return True
 
     def find_wrong_card_nearby(self, first_card, second_card):
-        print("KI sucht 'logische', falsche Karte")
+        ai_logger.debug(f"KI {self.difficulty} sucht 'logische', falsche Karte")
         # Finde die Position der ersten Karte im 2D-Array (Spielfeld)
         second_card_index = self.game_screen.card_list.index(second_card)
         row_index = second_card_index // self.cols
@@ -528,32 +567,45 @@ class AI(Player):
                 possible_nearby_cards.append(card)
 
         # Wähle eine zufällige Nachbarkarte, die nicht die richtige Karte ist
-        if possible_nearby_cards:
+        if len(possible_nearby_cards) > 0:
+            ai_logger.debug(f"Mögliche 'logische', falsche Karten gefunden: {len(possible_nearby_cards)}")
             shuffle(possible_nearby_cards)
             return possible_nearby_cards[0]
+        ai_logger.debug(f"Keine 'logische', falsche Karte gefunden. Suche zufällige, falsche Karte...")
         return self.find_random_wrong_card(first_card)  # Falls keine passende Karte gefunden wurde, wähle eine beliebige, falsche Karte
 
     def find_random_wrong_card(self, first_card):
-        print("Suche zufällige, falsche Karte")
+        ai_logger.debug("Suche zufällige, falsche Karte")
         shuffle(self.active_cards)
         for card in self.active_cards:
             if not card.disabled and not card.value == first_card.value and not card == first_card:
-                print(f"Falsche Karte ({card}) gefunden. First_Card = {first_card}")
+                ai_logger.debug(f"Falsche Karte ({card}) gefunden. First_Card = {first_card}")
                 return card
 
         for card in self.active_cards:
             if not card.disabled and not card == first_card:
-                print("Erstbeste Karte gefunden.")
+                ai_logger.debug("Erstbeste Karte gefunden.")
                 return card
 
+        card = self.find_any_card()
+        if card is not None:
+            ai_logger.error("Irgendeine Karte gefunden. Prüfe 'find_random_wrong_card' lieber mal..")
+            return card
+        else:
+            ai_logger.error("'find_random_wrong_card' hat gar nichts gefunden.. bitte überprüfen :|")
+            return None
+
     def find_any_card(self):
+        ai_logger.debug("Find any Card...")
         shuffle(self.active_cards)
         for card in self.active_cards:  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist und nicht zuletzt vom Spieler aufgedeckt wurde.
             if not card.disabled and not card.flipped and card not in self.players_last_cards:
+                ai_logger.debug("Find any Card; 'Schlaue', zufällige Karte gefunden.")
                 self.remember_card(card)
                 return card
         for card in self.active_cards:  # Wähle eine zufällige Karte aus, die noch nicht aufgedeckt ist.
             if not card.disabled and not card.flipped:
+                ai_logger.debug("Find any Card; komplett zufällige Karte gefunden.")
                 self.remember_card(card)
                 return card
         return None
@@ -873,6 +925,9 @@ class GameScreen(Screen):
 
     def restart_game(self):
         self.load_settings()
+        self.player.reset()
+        self.player2.reset()
+        self.ai.reset()
         self.flip_duration = 0
         if self.game_over_animation_running:
             Clock.unschedule(self.game_over_animation_running)
@@ -936,9 +991,7 @@ class GameScreen(Screen):
             current_game = f"{self.current_game_mode}_{self.current_difficulty}_{self.board_size}"
             self.current_highscore = highscores[current_game]
             self.update_time_display()
-        self.player.reset()
-        self.player2.reset()
-        self.ai.reset()
+
         self.current_player = self.player
         self.game_over_label.blend_out = True
         self.game_over_label.hide = True
@@ -949,7 +1002,7 @@ class GameScreen(Screen):
         thread.start()
 
     def update(self):
-        print("GameScreen: update")
+        general_logger.debug("GameScreen: update")
         count_found_cards = 0
         for card in self.card_list:
             if self.flip_duration == 0:
@@ -964,6 +1017,7 @@ class GameScreen(Screen):
                     else:
                         if not card.shrink_event and not card.zoom_event:
                             card.source = card.default_pic
+                            card.pos = card.starting_pos
             else:
                 if not card.shrink_event and not card.zoom_event:
                     card.source = card.pic
@@ -1061,13 +1115,14 @@ class GameScreen(Screen):
         return super().on_touch_up(touch)
 
     def flip_card(self, card):
-        print("flip_card")
+        self.card_flip_animation = card.flip_animation
         first_card = card
         first_card.flipped = True
-        print(f"Card_Flipped: {first_card.flipped}; Card_Animation: {first_card.flip_animation}")
         card.clicked()
-
-        self.ai.remember_card(first_card)
+        if self.current_game_mode == "battle":
+            if first_card not in self.ai.known_cards:
+                self.ai.remember_card(first_card)
+            ai_logger.debug(f"Card schon bekannt")
         second_card = None
 
         if self.current_game_mode == "time_race":
@@ -1078,12 +1133,12 @@ class GameScreen(Screen):
         for card in self.card_list:
             if card.flipped and card != first_card and not card.disabled:
                 second_card = card
-                print(f"Zweite Karte gefunden")
+                general_logger.debug(f"Zweite Karte gefunden")
                 break
 
         if second_card is not None:
             if first_card.value == second_card.value:
-                print("Paar gefunden")
+                general_logger.debug("Karten-Paar gefunden")
                 self.input_enabled = False
                 if self.current_player == self.player:
                     self.player.increment_turns()
@@ -1097,6 +1152,7 @@ class GameScreen(Screen):
                         else:
                             players_last_cards = [first_card, second_card]
                             if self.card_flip_animation == "flip":
+                                print("FLIP##################################")
                                 Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout + self.flip_duration)
                             else:
                                 Clock.schedule_once(lambda dt: self.ai_turn(players_last_cards), self.ai_timeout)
@@ -1104,10 +1160,10 @@ class GameScreen(Screen):
             else:
                 self.input_enabled = False
                 self.current_player.increment_turns()
-                print("Falsche Karte aufgedeckt")
+                general_logger.debug("Falsche Karte aufgedeckt")
                 Clock.schedule_once(lambda dt: self.hide_cards(first_card, second_card), self.hide_cards_timeout)
                 if self.current_game_mode == "battle" or self.current_game_mode == "duell_standard":
-                    print("Spieler wird gewechselt")
+                    general_logger.debug("Spieler wird gewechselt")
                     self.switch_player()
                     if self.current_player == self.ai:
                         players_last_cards = [first_card, second_card]
@@ -1123,7 +1179,7 @@ class GameScreen(Screen):
                 card.disabled = True
                 card.flipped = True
         self.input_enabled = True
-        self.ai.remove_pair(first_card)
+        self.ai.remove_pair(first_card, second_card)
 
     def hide_cards(self, first_card, second_card):
         for card in self.card_list:
@@ -1131,9 +1187,9 @@ class GameScreen(Screen):
                 card.clicked()
                 card.flipped = False
         self.input_enabled = True
-        self.update()
 
     def switch_player(self):
+        general_logger.debug(f"Switching Players; Current_Player: {self.current_player.name}")
         if self.current_game_mode != "duell_standard":
             if self.current_player == self.player:
                 self.current_player = self.ai
@@ -1147,19 +1203,23 @@ class GameScreen(Screen):
         self.top_label.text = self.app.translator.gettext("current_player").format(current_player_name=self.current_player.name)
 
     def ai_turn(self, players_last_cards):
-        first_card = self.ai.select_first_card(players_last_cards)
+        found_cards = self.ai.select_first_card(players_last_cards)
+        first_card = None
         second_card = None
+        if len(found_cards) > 0:
+            first_card = found_cards[0]
+
         if first_card:
-            self.flip_card(first_card)
-            second_card = self.ai.select_second_card(first_card)
+            Clock.schedule_once(lambda dt: self.flip_card(first_card), 0.1)
+            second_card = self.ai.select_second_card(found_cards)
         else:
-            print("Fehler, KI konnte keine erste Karte finden.")
+            ai_logger.error("Fehler, KI konnte keine erste Karte finden.")
             self.switch_player()
 
         if second_card:
             Clock.schedule_once(lambda dt: self.flip_card(second_card), self.ai_timeout)
         else:
-            print("Fehler, KI konnte zweite Karte nicht finden.")
+            ai_logger.error("Fehler, KI konnte zweite Karte nicht finden.")
             self.switch_player()
 
     def all_cards_found(self):
@@ -2086,7 +2146,6 @@ class PicsSelectScreen(Screen):
         self.nature_label.text = self.app.translator.gettext("nature_label")
 
     def save_pics_lists_screen(self):
-        print("Save Pics Lists")
         pics_selected = 0
         if self.akira_box.state == "down":
             pics_selected += 1
@@ -2117,7 +2176,6 @@ class PicsSelectScreen(Screen):
             self.load_checkbox_statuses()
 
     def load_checkbox_statuses(self):
-        print("load_checkbox_statuses")
         checkboxes = load_pics_lists()
         self.akira_box.state = checkboxes["akira_images"]
         self.cars_box.state = checkboxes["car_images"]
