@@ -386,14 +386,14 @@ class Coin(Image):
         self.starting_shrink_step = self.shrink_step
         self.flips = 0
         self.flip_event = None
-        self.flip_delay = 0.1
+        self.flip_delay = 0.05
         self.shrinking = True
         self.parent_screen = None
 
     def start_flip(self, pick):
         if not self.is_flipping:
             self.is_flipping = True
-            self.flips = randint(3, 10)  # Anzahl der Umdrehungen
+            self.flips = randint(1, 10)  # Anzahl der Umdrehungen
             self.flip_event = Clock.schedule_interval(self.flip, self.flip_delay)
             self.starting_pos = tuple(self.pos)
             self.starting_size = tuple(self.size)
