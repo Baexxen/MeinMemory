@@ -58,7 +58,7 @@ logging.basicConfig(
 
 # Logger für die KI erstellen
 ai_logger = logging.getLogger("AI_LOGIC")
-ai_logger.setLevel(logging.DEBUG)
+ai_logger.setLevel(logging.ERROR)
 # Logger für allgemeine Meldungen
 general_logger = logging.getLogger("GENERAL")
 
@@ -608,6 +608,9 @@ class AI(Player):
             if not card.disabled:
                 self.active_cards.append(card)
         shuffle(self.active_cards)
+        for card in self.known_cards:
+            if card.disabled:
+                self.known_cards.remove(card)
 
         ausschlussverfahren = len(self.active_cards) - len(self.known_cards)
         if ausschlussverfahren == 1:
@@ -697,7 +700,7 @@ class Card(ButtonBehavior, Image):
                 self.source = self.pic
             if self.size[0] < self.card_size_max[0]:
                 self.size = (self.size[0] + self.zoom_step, self.size[1] + self.zoom_step)
-                self.pos = (self.pos[0] - self.pos_step, self.pos[1] - self.pos_step)
+                self.pos = (self.pos[0] - self.zoom_step // 2, self.pos[1] - self.zoom_step // 2)
             else:
                 if self.zoom_event:
                     Clock.unschedule(self.zoom_event)
@@ -728,13 +731,15 @@ class Card(ButtonBehavior, Image):
         if self.flip_animation == "zoom":
             if self.size[0] > self.card_size_base[0]:
                 self.size = (self.size[0] - self.zoom_step, self.size[1] - self.zoom_step)
-                self.pos = (self.pos[0] + self.pos_step, self.pos[1] + self.pos_step)
+                self.pos = (self.pos[0] + self.zoom_step // 2, self.pos[1] + self.zoom_step // 2)
             else:
                 if self.shrink_event:
                     Clock.unschedule(self.shrink_event)
                     self.shrink_event = None
                 self.size = self.card_size_base
-                # self.game_screen.update()
+                self.pos = self.starting_pos
+                general_logger.debug(f"Card_Size = {self.size} / Base = {self.card_size_base}, Card_Pos = {self.pos} / Start = {self.starting_pos}")
+                self.game_screen.update()
 
         elif self.flip_animation == "flip":
             if self.width < self.card_size_base[0]:
@@ -1087,8 +1092,8 @@ class GameScreen(Screen):
         self.cols = cols
 
         # Berechnung der Kartengröße, inklusive 1 Pixel Abstand
-        card_width = (window_width - (cols - 1)) / cols
-        card_height = (window_height - (rows - 1)) / rows
+        card_width = int((window_width - (cols - 1)) / cols)
+        card_height = int((window_height - (rows - 1)) / rows)
         self.card_size_base = (card_width, card_height)
         self.card_size_max = (card_width + self.card_zoom_factor, card_height + self.card_zoom_factor)
 
@@ -1103,8 +1108,8 @@ class GameScreen(Screen):
             row = i // cols
             col = i % cols
             card.pos = (
-                col * (card_width + 1),  # 1 Pixel Abstand zwischen den Karten horizontal
-                window_height - (row + 1) * (card_height + 1)  # 1 Pixel Abstand zwischen den Karten vertikal
+                int(col * (card_width + 1)),  # 1 Pixel Abstand zwischen den Karten horizontal
+                int(window_height - (row + 1) * (card_height + 1))  # 1 Pixel Abstand zwischen den Karten vertikal
             )
             card.starting_pos = card.pos
             card.flip_animation = self.card_flip_animation
@@ -1190,6 +1195,7 @@ class GameScreen(Screen):
                 card.clicked()
                 card.flipped = False
         self.input_enabled = True
+        self.update_card_pos_and_size()
 
     def switch_player(self):
         if self.current_game_mode != "duell_standard":
