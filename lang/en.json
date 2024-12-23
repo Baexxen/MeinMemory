@@ -68,6 +68,7 @@
     "_comment_GameScreen_top_label": "TopLabel",
     "game_over": "Game Over",
     "new_highscore": "New Highscore! =) Score: {player_score}",
+    "new_highscore_standard": "New Highscore! =) Turns needed: {player_score}",
     "new_highscore_time_race": "New Record! =) Elapsed Time: {elapsed_time} seconds",
     "no_new_highscore": "No new Highscore... Maybe next time ;-)",
     "single_player": "Single Player",

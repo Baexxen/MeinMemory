@@ -68,6 +68,7 @@
     "_comment_GameScreen_top_label": "TopLabel",
     "game_over": "Spielende",
     "new_highscore": "Neuer Rekord! =) Punkte: {player_score}",
+    "new_highscore_standard": "Neuer Rekord! =) Benötigte Runden: {player_score}",
     "new_highscore_time_race": "Neuer Rekord! =) Benötigte Zeit: {elapsed_time} Sekunden",
     "no_new_highscore": "Keine neue Bestleistung... Vielleicht nächstes Mal ;-)",
     "single_player": "Einzelspieler",
