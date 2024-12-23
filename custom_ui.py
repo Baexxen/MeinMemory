@@ -373,6 +373,7 @@ class Coin(Image):
         super().__init__(**kwargs)
         self.head_image = "gfx/misc/Kopf.png"
         self.tail_image = "gfx/misc/Zahl.png"
+        self.background_normal = ""
         self.source = self.head_image
         self.keep_ratio = False
         self.allow_stretch = True

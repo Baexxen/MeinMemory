@@ -1112,6 +1112,7 @@ class GameScreen(Screen):
             )
             card.starting_pos = card.pos
             card.flip_animation = self.card_flip_animation
+            self.update()
 
     def on_touch_down(self, touch):
         self.active_touches.add(touch.uid)
@@ -2248,8 +2249,8 @@ class WhoStartsScreen(Screen):
         self.current_game_mode = "battle"
         self.theme = "color"
         self.theme_color = "color"
-        self.head_button.background_normal = "gfx/misc/Kopf.png"
-        self.tail_button.background_normal = "gfx/misc/Zahl.png"
+        self.head_button.background_normal = "gfx/misc/Kopf_color.png"
+        self.tail_button.background_normal = "gfx/misc/Zahl_color.png"
         self.app = None
         self.game_screen = None
         self.duell_screen = None
@@ -2265,6 +2266,20 @@ class WhoStartsScreen(Screen):
         if not self.app:
             self.app = App.get_running_app()
         self.theme_color = self.app.theme_color
+        if self.theme_color == "color":
+            self.head_button.background_normal = "gfx/misc/Kopf_color.png"
+            self.tail_button.background_normal = "gfx/misc/Zahl_color.png"
+        elif self.theme_color == "light":
+            self.head_button.background_normal = "gfx/misc/Kopf_light.png"
+            self.tail_button.background_normal = "gfx/misc/Zahl_light.png"
+        elif self.theme_color == "dark":
+            self.head_button.background_normal = "gfx/misc/Kopf_dark.png"
+            self.tail_button.background_normal = "gfx/misc/Zahl_dark.png"
+        self.coin.head_image = self.head_button.background_normal
+        self.coin.tail_image = self.tail_button.background_normal
+        self.coin.remove_from_cache()
+        self.coin.source = self.coin.head_image
+
         self.redraw()
 
     def redraw(self):
