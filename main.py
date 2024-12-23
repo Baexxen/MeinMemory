@@ -61,7 +61,7 @@ ai_logger = logging.getLogger("AI_LOGIC")
 ai_logger.setLevel(logging.ERROR)
 # Logger für allgemeine Meldungen
 general_logger = logging.getLogger("GENERAL")
-
+general_logger.setLevel(logging.ERROR)
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 WHITE = (1, 1, 1, 1)
@@ -738,7 +738,6 @@ class Card(ButtonBehavior, Image):
                     self.shrink_event = None
                 self.size = self.card_size_base
                 self.pos = self.starting_pos
-                general_logger.debug(f"Card_Size = {self.size} / Base = {self.card_size_base}, Card_Pos = {self.pos} / Start = {self.starting_pos}")
                 self.game_screen.update()
 
         elif self.flip_animation == "flip":
@@ -1317,12 +1316,19 @@ class GameScreen(Screen):
         if highscore_valid:
             highscore = update_best_scores(self.current_game_mode, self.current_difficulty, self.board_size, score)
             if highscore:
-                self.top_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
-                self.current_highscore = score
-                if self.current_game_mode != "time_race":
-                    self.game_over_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
+                if self.current_game_mode == "standard":
+                    self.top_label.text = self.app.translator.gettext("new_highscore_standard").format(player_score=score)
+                elif self.current_game_mode == "time_race":
+                    self.top_label.text = self.app.translator.gettext("new_highscore_time_race")
                 else:
+                    self.top_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
+                self.current_highscore = score
+                if self.current_game_mode == "standard":
+                    self.game_over_label.text = self.app.translator.gettext("new_highscore_standard").format(player_score=score)
+                elif self.current_game_mode == "time_race":
                     self.game_over_label.text = self.app.translator.gettext("new_highscore_time_race").format(elapsed_time=score)
+                else:
+                    self.game_over_label.text = self.app.translator.gettext("new_highscore").format(player_score=score)
                 self.game_over_label.hide = False
                 self.game_over_label.opacity = 1
                 self.game_over_label.redraw()
